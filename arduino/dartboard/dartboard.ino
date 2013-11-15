@@ -1,22 +1,19 @@
-/*
-  DigitalReadSerial
- Reads a digital input on pin 2, prints the result to the serial monitor 
- 
- This example code is in the public domain.
- */
- 
-// digital pin 2 has a pushbutton attached to it. Give it a name:
-int outpin[] = {6, 7};
-int outc = 2;
-int inpin[] = {2,3,4};
-int inc = 3;
+int outpin[] = {37, 39, 41, 43, 45, 47, 49};
+int outc = 7;
+int inpin[] = {30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52};
+int inc = 12;
+int butpin[] = {14,15,16,17,18,19,20};
+int butc = 7;
+int butgnd = 21;
+int out;
+int in;
+int i;
 
 // the setup routine runs once when you press reset:
 void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(115200);
   // set inpins/outpins
-  int i;
   for (i = 0; i < inc; i++) {
       pinMode(inpin[i], INPUT);
       digitalWrite(inpin[i], HIGH); // activate 20k pull-up
@@ -25,31 +22,39 @@ void setup() {
       pinMode(outpin[i], OUTPUT);
       digitalWrite(outpin[i], HIGH);
   }
+  // set button pins to input
+  for (i = 0; i < butc; i++) {
+      pinMode(butpin[i], INPUT);
+      digitalWrite(butpin[i], HIGH); // activate 20k pull-up
+  }
+  pinMode(butgnd, OUTPUT);
+  digitalWrite(butgnd, 0); // set gnd for buttons
 }
 
 // the loop routine runs over and over again forever:
 void loop() {
-  int out;
-  int in;
   for (out = 0; out < outc; out++) {
      digitalWrite(outpin[out], LOW);
      for (in = 0; in < inc; in++) {
         if (! digitalRead(inpin[in])) {
-           Serial.write(out + (in << 4));
+           Serial.write((out << 4) + in);
            delay(250);
            if (! digitalRead(inpin[in])) {
-             Serial.write(0xFF);
+             Serial.write(0x70);
              while (! digitalRead(inpin[in])) {
                 delay(200);
              }
-             Serial.write(0xFE);
+             Serial.write(0x71);
            }
            delay(250);
         }
      }
      digitalWrite(outpin[out], HIGH);
   }  
+  for (i = 0; i < butc; i++) {
+    if (! digitalRead(butpin[i])) {
+      Serial.write(0x80 + i);
+      delay(250);
+    }
+  }
 }
-
-
-
