@@ -26,17 +26,21 @@ class DartsServerFactory(WebSocketServerFactory):
    def __init__(self, url, debug = False, debugCodePaths = False):
        WebSocketServerFactory.__init__(self, url, debug = debug, debugCodePaths = debugCodePaths)
        self.clients = []
+       self.connectMessage = {}
       
    def broadcast(self, msg):
+       msg_json = simplejson.dumps(msg)
        for client in self.clients:
-           client.sendMessage(simplejson.dumps(msg))
-           #client.queue.put(simplejson.dumps(msg))
+           client.sendMessage(msg_json)
+       self.connectMessage.update(msg)
        
 
    def register(self, client):
        if not client in self.clients:
            print "registered client " + client.peerstr
            self.clients.append(client)
+           if len(self.connectMessage):
+               client.sendMessage(simplejson.dumps(self.connectMessage))
 
    def unregister(self, client):
        if client in self.clients:
@@ -71,7 +75,7 @@ class Webserver(Component):
         a['ranking'] = state.player_list(sortby = 'order')
         return a
 
-    @handler('game_initialized', 'round_finished')
+    @handler('game_initialized', 'round_finished', 'round_started')
     def _send_full_state(self, state):
         self.factory.broadcast(self.serialize_full(state))
 
@@ -84,3 +88,6 @@ class Webserver(Component):
 
     def leave_hold(self, manual):
         self.factory.broadcast({'state': 'normal'})
+
+    def game_over(self, manual):
+        self.factory.broadcast({'state': 'gameover'})

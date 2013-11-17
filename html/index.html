@@ -20,12 +20,11 @@
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
       <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
     <![endif]-->
-
+    <link rel="stylesheet" href="css/font-awesome.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular.min.js"></script>
   </head>
 
   <body>
-
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
       <div class="container">
         <div class="navbar-header">
@@ -48,40 +47,51 @@
     </div>
 
     <div class="container" ng-controller="DartCtrl">
+      
+      <div class="row fit-height-body-18 connlost" ng-if="state.state == 'connlost'">
+	Connection lost. Please reload!
+      </div>
 
-      <div class="row">
-        <div class="col-md-4 fit-height-body-4" id="name">{{currentPlayer}}</div>
-        <div class="col-md-4 fit-height-body-4" id="score">{{currentScore}}</div>
+      <div class="row" ng-if="state != 'gameover'">
+        <div class="col-md-4 fit-height-body-4" id="name">{{state.currentPlayer}}</div>
+        <div class="col-md-4 fit-height-body-4" id="score">{{state.currentScore}}</div>
         <div class="col-md-4">
 	  <div class="row" id="darts-left">
-	    <div class="col-md-12 fit-height-body-12" ng-repeat="dart in currentDarts">
-	      {{dart.text}}
+	    <div class="col-md-12 fit-height-body-12" ng-repeat="dart in state.currentDarts track by $index">
+	      <span class="dart">{{dart}}</span>
 	    </div>
 	  </div>
 	</div>
       </div>
-      <div class="row fit-height-body-18" ng-class="{hold: hold, play: !hold}">
-	<span ng-if="hold">HOLD</span>
-	<span ng-if="!hold">PLAY</span>
+      <h1 ng-if="state == 'gameover'">
+	Final results:
+      </h1>
+      <div class="row fit-height-body-18" ng-class="{hold: state.state=='hold', play: state.state != 'hold'}">
+	<span ng-if="state.state=='hold'"><i class="fa fa-stop"></i> HOLD</span>
+	<span ng-if="state.state != 'hold'"><i class="fa fa-play"></i> PLAY</span>
       </div>
+
 
       <table class="table table-striped table-hover table-condensed">
 	<thead>
 	  <tr>
+	    <th></th>
 	    <th>Rank</th>
 	    <th>Name</th>
 	    <th>Last Round</th>
 	    <th>Score</th>
-	    <th>CO</th>
 	  </tr>
 	</thead>
 	<tbody>
-	  <tr ng-repeat="p in players" ng-class="{success: p.score == 0}">
-	    <td>{{p.rank}}</td>
+	  <tr ng-repeat="p in state.ranking" ng-class="{success: p.score == 0}">
+	    <td>
+	      <i class="fa fa-check-square" ng-if="p.score == 0"></i>
+	      <i class="fa fa-arrow-right" ng-if="p.name == state.currentPlayer"></i>
+	    </td>
+	    <td>{{p.rank + 1}}</td>
 	    <td>{{p.name}}</td>
-	    <td>{{p.lastround}}</td>
+	    <td><span ng-repeat="d in p.last_round track by $index" class="dart">{{d}} </span></td>
 	    <td>{{p.score}}</td>
-	    <td><span ng-if="p.score == 0">&#10003;</span></td>
 	  </tr>
       </table>
 

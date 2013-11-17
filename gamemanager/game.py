@@ -114,7 +114,8 @@ class GameState(object):
                 'started': x, 
                 'rounds': len(self.history[x]), 
                 'last_round': (self.history[x][-1] if len(self.history[x]) else []), 
-                'score': self.scores[x]
+                'score': self.scores[x],
+                'name': self.players[x]
                 } for x in range(len(self.players))]
         s = sorted(lst, key=itemgetter('score', 'rounds', 'started'))
         for i in range(len(s)):

@@ -16,6 +16,12 @@ body {
     text-align: center;
 }
 
+.connlost {
+    background-color: #900;
+    color: white;
+    text-align: center;
+}
+
 .hold {
     background-color: #900;
     color: white;
@@ -25,4 +31,12 @@ body {
     background-color: #090;
     color: white;
     text-align: center;
+}
+
+.dart {
+    font-weight: bold;
+}
+
+.table {
+    font-size: large;
 }
