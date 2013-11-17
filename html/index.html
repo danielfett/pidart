@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app>
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -20,6 +20,8 @@
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
       <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
     <![endif]-->
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular.min.js"></script>
   </head>
 
   <body>
@@ -45,27 +47,22 @@
       </div>
     </div>
 
-    <div class="container">
+    <div class="container" ng-controller="DartCtrl">
 
       <div class="row">
-        <div class="col-md-4 fit-height-body-4" id="name">DF</div>
-        <div class="col-md-4 fit-height-body-4" id="score">301</div>
+        <div class="col-md-4 fit-height-body-4" id="name">{{currentPlayer}}</div>
+        <div class="col-md-4 fit-height-body-4" id="score">{{currentScore}}</div>
         <div class="col-md-4">
 	  <div class="row" id="darts-left">
-	    <div class="col-md-12 fit-height-body-12">
-	      T20
-	    </div>
-	    <div class="col-md-12 fit-height-body-12">
-	      T20
-	    </div>
-	    <div class="col-md-12 fit-height-body-12">
-	      T20
+	    <div class="col-md-12 fit-height-body-12" ng-repeat="dart in currentDarts">
+	      {{dart.text}}
 	    </div>
 	  </div>
 	</div>
       </div>
-      <div class="row fit-height-body-18" id="hold">
-	HOLD
+      <div class="row fit-height-body-18" ng-class="{hold: hold, play: !hold}">
+	<span ng-if="hold">HOLD</span>
+	<span ng-if="!hold">PLAY</span>
       </div>
 
       <table class="table table-striped table-hover table-condensed">
@@ -79,56 +76,13 @@
 	  </tr>
 	</thead>
 	<tbody>
-	  <tr>
-	    <td>3</td>
-	    <td>AB</td>
-	    <td>S19 S10 S3</td>
-	    <td>201</td>
-	    <td></td>
+	  <tr ng-repeat="p in players" ng-class="{success: p.score == 0}">
+	    <td>{{p.rank}}</td>
+	    <td>{{p.name}}</td>
+	    <td>{{p.lastround}}</td>
+	    <td>{{p.score}}</td>
+	    <td><span ng-if="p.score == 0">&#10003;</span></td>
 	  </tr>
-	  <tr class="success">
-	    <td>1</td>
-	    <td>ED</td>
-	    <td>S1 S9 S3</td>
-	    <td>201</td>
-	    <td>&#10003;</td>
-	  </tr>
-	  <tr>
-	    <td>5</td>
-	    <td>JUS</td>
-	    <td>S1 D10 --</td>
-	    <td>201</td>
-	    <td></td>
-	  </tr>
-	  <tr>
-	    <td>2</td>
-	    <td>CD</td>
-	    <td>D8 D16 S3</td>
-	    <td>201</td>
-	    <td></td>
-	  </tr>
-	  <tr>
-	    <td>4</td>
-	    <td>AMS</td>
-	    <td>D7 D4 S3</td>
-	    <td>201</td>
-	    <td></td>
-	  </tr>
-	  <tr>
-	    <td>6</td>
-	    <td>GH</td>
-	    <td>S20 D1 S3</td>
-	    <td>201</td>
-	    <td></td>
-	  </tr>
-	  <tr>
-	    <td>3</td>
-	    <td>AB</td>
-	    <td>T20 D10 S3</td>
-	    <td>201</td>
-	    <td></td>
-	  </tr>
-
       </table>
 
     </div><!-- /.container -->

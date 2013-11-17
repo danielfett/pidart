@@ -16,8 +16,13 @@ body {
     text-align: center;
 }
 
-#hold {
+.hold {
     background-color: #900;
+    color: white;
+    text-align: center;
+}
+.play {
+    background-color: #090;
     color: white;
     text-align: center;
 }
