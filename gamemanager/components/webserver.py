@@ -54,6 +54,7 @@ class Webserver(Component):
 
         self.factory.protocol = DartsProtocol
         self.factory.setProtocolOptions(allowHixie76 = True)
+        self.factory.broadcast({'state': 'normal'})
         listenWS(self.factory)
         
         webdir = File("../html/")

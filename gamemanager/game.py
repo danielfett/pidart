@@ -6,6 +6,7 @@ from time import sleep
 from sys import exit
 from circuits import Component, Event, Task, Debugger
 import serial
+import argparse
 
 from components.webserver import Webserver
 from components.logger import Logger
@@ -216,8 +217,18 @@ class DartGame(Component):
                 exit()
 
 if __name__ == "__main__":
-    #d = DartGame(DartInput(), players)
-    #d = (DartGame(DartInput(), players) + Logger() + LegacySounds() + Debugger())
-    d = (DartGame(DartInput(), players) + Logger() + EspeakSounds() + Webserver() + Debugger())
+    parser = argparse.ArgumentParser(description='Start a dart game.')
+    parser.add_argument('players', metavar='P', type=str, nargs='+',
+                        help="player's names")
+    parser.add_argument('--snd', default='legacy',
+                        help="sound system (none/legacy/espeak)")
+    args = parser.parse_args()
+    
+    d = (DartGame(DartInput(), args.players) + Logger() + Webserver() + Debugger())
+    if args.snd == 'legacy':
+        d += LegacySounds()
+    elif args.snd == 'espeak':
+        d += EspeakSounds()
+    #d = (DartGame(DartInput(), players) + Logger() + EspeakSounds() + Webserver() + Debugger())
     d.run()
     

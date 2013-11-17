@@ -1,11 +1,19 @@
 
 
 function fitText() {
-  var divisors = [4, 12, 18];
-  for (var d in divisors) {
-    $( '.fit-height-body-' + divisors[d] ).each(function ( i, box ) {
-      $(box).css('font-size', $(window).height()/divisors[d]);
-    });
+  var divisors = [4, 6, 12, 18];
+  if ($(window).height() < $(window).width()) {
+    for (var d in divisors) {
+      $( '.fit-height-body-' + divisors[d] ).each(function ( i, box ) {
+        $(box).css('font-size', $(window).height()/divisors[d]);
+      });
+    }
+  } else {
+    for (var d in divisors) {
+      $( '.fit-width-body-' + divisors[d] ).each(function ( i, box ) {
+        $(box).css('font-size', $(window).height()/divisors[d]);
+      });
+    }
   }
 }
 
@@ -21,11 +29,9 @@ function DartCtrl($scope) {
   $scope.state = {};
 
   $(document).ready(function() {
-    var wsuri = "ws://localhost:9000";
+    var wsuri = window.location.href.replace(/^http(s?:\/\/.*):\d+\/.*$/, 'ws$1:9000/');
     if ("WebSocket" in window) {
-      sock = new WebSocket(wsuri);
-    } else if ("MozWebSocket" in window) {
-      sock = new MozWebSocket(wsuri);
+      sock = new ReconnectingWebSocket(wsuri);
     } else {
       console.error("Browser does not support WebSocket!");
       window.location = "http://autobahn.ws/unsupportedbrowser";

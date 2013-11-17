@@ -34,13 +34,14 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">Project name</a>
+          <a class="navbar-brand" href="#">infsec eDarts</a>
         </div>
         <div class="collapse navbar-collapse">
-          <ul class="nav navbar-nav">
+          <ul class="nav navbar-nav"><!--
             <li class="active"><a href="#">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li><a href="#about">About</a></li> -->
+            <li><a href="http://infsec.uni-trier.de/dartenbank">Dartenbank</a></li>
+            <li><a href="http://infsec.uni-trier.de/dartenbank/input/">input results</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -53,11 +54,11 @@
       </div>
 
       <div class="row" ng-if="state != 'gameover'">
-        <div class="col-md-4 fit-height-body-4" id="name">{{state.currentPlayer}}</div>
-        <div class="col-md-4 fit-height-body-4" id="score">{{state.currentScore}}</div>
-        <div class="col-md-4">
+        <div class="col-md-4 col-xs-6 fit-height-body-4 fit-width-body-6" id="name">{{state.currentPlayer}}</div>
+        <div class="col-md-4 col-xs-6 fit-height-body-4 fit-width-body-6" id="score">{{state.currentScore}}</div>
+        <div class="col-xs-12 col-md-4">
 	  <div class="row" id="darts-left">
-	    <div class="col-md-12 fit-height-body-12" ng-repeat="dart in state.currentDarts track by $index">
+	    <div class="col-xs-4 col-md-12 fit-height-body-12" ng-repeat="dart in state.currentDarts track by $index">
 	      <span class="dart">{{dart}}</span>
 	    </div>
 	  </div>
@@ -103,6 +104,7 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script src="js/reconnectingWebsocket.js"></script>
     <script src="index.js"></script>
   </body>
 </html>
