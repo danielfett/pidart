@@ -153,8 +153,8 @@ class DartGame(Component):
 
     def hold(self, manual):
         self.event(EnterHold(manual))
-        print "Press select or start after removing the darts"
-        while self.input.read() not in ['BSTART', 'BSELECT']:
+        print "Press game or start after removing the darts"
+        while self.input.read() not in ['BSTART', 'BGAME']:
             pass
         self.event(LeaveHold(manual))
 
@@ -182,7 +182,7 @@ class DartGame(Component):
                     print "Player skipped."
                     wait_for_removal_of_darts = False
                     break
-                elif code == 'BSELECT':
+                elif code == 'BGAME':
                     self.hold(True)
                 elif code.startswith('X') or code.startswith('B'):
                     self.event(CodeNotImplemented())
