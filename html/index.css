@@ -1,0 +1,23 @@
+
+body {
+    padding-top: 50px;
+}
+
+#name {
+    text-align: center;
+    font-weight: bold;
+}
+
+#score {
+    text-align: center;
+}
+
+#darts-left div {
+    text-align: center;
+}
+
+#hold {
+    background-color: #900;
+    color: white;
+    text-align: center;
+}

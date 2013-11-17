@@ -39,12 +39,9 @@ void loop() {
         if (! digitalRead(inpin[in])) {
            Serial.write((out << 4) + in);
            delay(250);
-           if (! digitalRead(inpin[in])) {
-             Serial.write(0x70);
-             while (! digitalRead(inpin[in])) {
-                delay(200);
-             }
-             Serial.write(0x71);
+           while (! digitalRead(inpin[in])) {
+              Serial.write(0x70);
+              delay(400);
            }
            delay(250);
         }
