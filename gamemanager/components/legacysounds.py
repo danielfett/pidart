@@ -1,6 +1,7 @@
 """ PLAYING SOUNDS """
 
 from circuits import Component
+from time import sleep
 import pygame
 
 class LegacySounds(Component):
@@ -16,6 +17,7 @@ class LegacySounds(Component):
 
     def __init__(self):
         super(LegacySounds, self).__init__()
+        pygame.mixer.pre_init(44100,-16,2, 1024)
         pygame.init()
         self.sounds = {}
         for n in self.SOUNDS:
@@ -45,7 +47,8 @@ class LegacySounds(Component):
 
     def hit_winner(self, state, code):
         self.play('finish')
-        if len(state.winners()) == 0:
+        print repr(state.winners())
+        if len(state.winners()) == 1:
             sleep(3.591)
             self.play('winner')
 

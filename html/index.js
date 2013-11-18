@@ -45,7 +45,9 @@ function DartCtrl($scope) {
     sock.onclose = function(e) {
       console.log("Connection closed (wasClean = " + e.wasClean + ", code = " + e.code + ", reason = '" + e.reason + "')");
       sock = null;
-      $scope.state.state = 'connlost';
+      if ($scope.state.state != 'gameover') {
+         $scope.state.state = 'connlost';
+      }
       $scope.$apply();
       fitText();
     }

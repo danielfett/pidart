@@ -51,6 +51,10 @@ void loop() {
   for (i = 0; i < butc; i++) {
     if (! digitalRead(butpin[i])) {
       Serial.write(0x80 + i);
+      delay(400);
+      while (! digitalRead(butpin[i])) {
+        delay(300);
+      }
       delay(250);
     }
   }

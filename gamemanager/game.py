@@ -177,10 +177,10 @@ class DartGame(Component):
                 if code == 'XSTUCK':
                     self.event(DartStuck())
                     print "Dart is stuck, remove dart!"
-                elif code == 'BSTART':
+                elif code == 'BGAME': #START':
                     self.event(SkipPlayer())
                     print "Player skipped."
-                    wait_for_removal_of_darts = False
+                    wait_for_removal_of_darts = len(state.currentDarts)
                     break
                 elif code == 'BGAME':
                     self.hold(True)
@@ -224,7 +224,7 @@ if __name__ == "__main__":
                         help="sound system (none/legacy/espeak)")
     args = parser.parse_args()
     
-    d = (DartGame(DartInput(), args.players) + Logger() + Webserver() + Debugger())
+    d = (DartGame(DartInput(), args.players) + Logger() + Webserver())
     if args.snd == 'legacy':
         d += LegacySounds()
     elif args.snd == 'espeak':
