@@ -68,7 +68,7 @@ class Webserver(Component):
         return {
             'currentPlayer': state.players[state.currentPlayer],
             'currentDarts': state.currentDarts,
-            'currentScore': state.scores[state.currentPlayer]
+            'currentScore': state.scores[state.currentPlayer] - state.currentScore
             }
 
     def serialize_full(self, state):

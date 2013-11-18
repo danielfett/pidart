@@ -83,19 +83,27 @@ class GameState(object):
 
         self.currentPlayer = 0
         self.currentDarts = []
+        self.currentScore = 0
 
     def add_dart(self, dart, s):
         self.currentDarts.append(dart)
-        if self.scores[self.currentPlayer] - s < 0:
+        self.currentScore += s
+        if self.scores[self.currentPlayer] - self.currentScore < 0:
             return 'bust'
-        self.scores[self.currentPlayer] -= s
-        if self.scores[self.currentPlayer] == 0:
+        if self.scores[self.currentPlayer] - self.currentScore ==  0:
             return 'winner'
 
     def flush_round(self):
         self.history[self.currentPlayer].append(self.currentDarts)
+        self.scores[self.currentPlayer] -= self.currentScore
         self.currentDarts = []
+        self.currentScore = 0
 
+    def cancel_round(self):
+        self.currentDarts = []
+        self.currentScore = 0
+
+    def next_round(self):
         wasPlayer = self.currentPlayer
         winners = self.winners()
         while self.currentPlayer == wasPlayer or self.currentPlayer in winners:
@@ -165,6 +173,7 @@ class DartGame(Component):
 
         while True:
             wait_for_removal_of_darts = True
+            commit = True
             self.event(RoundStarted(state))
             print "=============== Round %d ===============" % state.round
             while len(state.currentDarts) < self.NUMBEROFDARTS:
@@ -172,7 +181,7 @@ class DartGame(Component):
                     len(state.currentDarts)+1, 
                     state.round, 
                     state.players[state.currentPlayer], 
-                    state.scores[state.currentPlayer])
+                    state.scores[state.currentPlayer] - state.currentScore)
                 code = self.input.read()
                 if code == 'XSTUCK':
                     self.event(DartStuck())
@@ -194,6 +203,7 @@ class DartGame(Component):
                     if res == 'bust':
                         self.event(HitBust(state, code))
                         print "BUST!"
+                        commit = False
                         break 
                     elif res == 'winner':
                         self.event(HitWinner(state, code))
@@ -203,7 +213,11 @@ class DartGame(Component):
                         self.event(Hit(state, code))
 
             self.event(RoundFinished(state))
-            state.flush_round()
+            if commit:
+                state.flush_round()
+            else:
+                state.cancel_round()
+            state.next_round()
             
             if wait_for_removal_of_darts:
                 self.hold(False)
