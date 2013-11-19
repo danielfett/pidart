@@ -4,7 +4,8 @@ players = ['AB', 'CD', 'EF']
 from codes import FIELDCODES
 from time import sleep
 from sys import exit
-from circuits import Component, Event, Task, Debugger
+from circuits import Component, Event, Debugger, Component
+from circuits.io.serial import Serial
 import serial
 import argparse
 
@@ -13,22 +14,8 @@ from components.logger import Logger
 from components.legacysounds import LegacySounds
 from components.espeaksounds import EspeakSounds
 
-class DartInput(object):
-    def __init__(self, device = '/dev/ttyUSB0'):
-        self.ser = serial.Serial(device, 115200)
-        sleep(1) # for arduino's reset circuit
-        
-    def read(self):
-        inp = ord(self.ser.read(1))
-        try:
-            return FIELDCODES[inp]
-        except KeyError:
-            raise Exception("Unknown fieldcode: %x" % inp)
-
-class FakeInput(object):
-    def read(self):
-        inp = raw_input("? ").strip().upper()
-        return inp
+class ReceiveInput(Event):
+    """ Some input arrived (fieldcode or other input) """
 
 class GameInitialized(Event):
     """ A new game was started. """
@@ -65,6 +52,32 @@ class RoundFinished(Event):
 
 class GameOver(Event):
     """ The game is over. """
+
+class DartInput(Component):
+    def __init__(self, device = '/dev/ttyUSB0'):
+        super(DartInput, self).__init__()
+        #self.ser = serial.Serial(device, 115200)
+        #sleep(1) # for arduino's reset circuit
+        Serial(device, baudrate = 115200, bufsize = 1, timeout = 0, channel = 'serial').register(self)
+        sleep(1)
+        
+    def do_read(self, data):
+        print data
+        for b in data:
+            try:
+                self.fire(ReceiveInput(('serial', FIELDCODES[b])))
+            except KeyError:
+                raise Exception("Unknown fieldcode: %x" % inp)
+
+    def generate_events(self, event):
+        
+
+class FakeInput(object):
+    def read(self):
+        inp = raw_input("? ").strip().upper()
+        return inp
+
+
 
 """ MAIN COMPONENT """
 
@@ -136,9 +149,8 @@ class GameState(object):
 class DartGame(Component):
     NUMBEROFDARTS = 3
 
-    def __init__(self, inp, players, startvalue = 301):
+    def __init__(self, players, startvalue = 301):
         super(DartGame, self).__init__()
-        self.input = inp
         self.players = players
         self.startvalue = startvalue
 
@@ -157,19 +169,20 @@ class DartGame(Component):
 
     def event(self, event):
         self.fire(event)
-        self.flush()
-
-    def hold(self, manual):
-        
-        
+        self.flush()        
 
     def receive_input(self, input):
         in_type, in_value = input
-        if self.state.state == 'hold':
+        if self.state.state == 'hold_in_round':
             if in_type != 'serial' or in_value not in ['BSTART', 'BGAME']:
-                continue
-            self.state.state = 'playing' # check if we sometimes have to go to other states
-            self.event(LeaveHold(manual))
+                return
+            self.event(LeaveHold(True))
+            self.start_round()
+        elif self.state.state == 'hold_between_rounds':
+            if in_type != 'serial' or in_value not in ['BSTART', 'BGAME']:
+                return
+            self.event(LeaveHold(False))
+            self.start_round()
         elif self.state.state == 'playing': 
             print "--> Now playing Dart #%d in Round %d: %s (%d Points left)" % (
                 len(self.state.currentDarts)+1, 
@@ -182,7 +195,7 @@ class DartGame(Component):
                     print "Dart is stuck, remove dart!"
                 elif in_value == 'BGAME': #START':
                     self.event(SkipPlayer())
-                    self.finish_round(commit = True, len(self.state.currentDarts)) # hold only if there are darts sticking in the board
+                    self.finish_round(commit = True, hold = len(self.state.currentDarts)) # hold only if there are darts sticking in the board
                 elif in_value.startswith('X') or in_value.startswith('B'):
                     self.event(CodeNotImplemented())
                     print "Not implemented: %s" % code
@@ -191,59 +204,54 @@ class DartGame(Component):
                     s = self.score2sum(code)
                     res = self.state.add_dart(code, s)
                     if res == 'bust':
-                        self.event(HitBust(state, code))
+                        self.event(HitBust(self.state, code))
                         print "BUST!"
                         self.finish_round(commit = False, hold = True)
                     elif res == 'winner':
-                        self.event(HitWinner(state, code))
+                        self.event(HitWinner(self.state, code))
                         print "WINNER!"
                         self.finish_round(commit = True, hold = True)
                     else:
-                        self.event(Hit(state, code))
+                        self.event(Hit(self.state, code))
                         if len(self.state.currentDarts) == self.NUMBEROFDARTS:
                             self.finish_round(commit = True, hold = True)
+        elif self.state.state == 'gameover':
+            if in_type != 'serial' or in_value not in ['BSTART', 'BGAME']:
+                return
+            self.start_game()
+            
 
     def finish_round(self, commit, hold):
-        self.event(RoundFinished(state))
+        self.event(RoundFinished(self.state))
         if commit:
-            state.flush_round()
+            self.state.flush_round()
         else:
-            state.cancel_round()
-        state.next_round()
+            self.state.cancel_round()
+        if len(self.state.winners()) == len(self.state.players) - 1: # all have checked out
+            self.event(GameOver(self.state))
+            print "Game is over! Ranking:"
+            for w in self.state.player_list(sortby='rank'):
+                print "%d: %s" % (w['rank'] + 1, w['name'])
+            self.state.state = 'gameover'
+        self.state.next_round()
         if hold:
-            self.event(EnterHold(manual))
-            self.state.state = 'hold'
+            self.event(EnterHold(False))
+            self.state.state = 'hold_between_rounds'
         else:
-            self.state.state = 'playing'
-            # check if round actually started?
-            self.event(RoundStarted(state))
+            self.start_round()
         
 
     def started(self, *args):
+        self.start_game()
+
+    def start_game(self):
         self.state = GameState(self.players, self.startvalue)
+        self.event(GameInitialized(self.state))
 
-        self.event(GameInitialized(state))
-
+    def start_round(self):
+        self.event(RoundStarted(self.state))
         self.state.state = 'playing'
-            wait_for_removal_of_darts = True
-            commit = True
-            
-            print "=============== Round %d ===============" % state.round
-            while len(state.currentDarts) < self.NUMBEROFDARTS:
-                code = self.input.read()
 
-                #todo...
-            
-            if wait_for_removal_of_darts:
-                self.hold(False)
-
-            # we have n-1 winners, so the game is over and the current player is last
-            if state.game_over():
-                self.event(GameOver(state))
-                print "Game is over! Ranking:"
-                for w in state.player_list(sortby='rank'):
-                    print "%d: %s" % (w['rank'] + 1, w['name'])
-                exit()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Start a dart game.')
@@ -251,9 +259,11 @@ if __name__ == "__main__":
                         help="player's names")
     parser.add_argument('--snd', default='legacy',
                         help="sound system (none/legacy/espeak)")
+    parser.add_argument('--dev', default='/dev/ttyUSB0',
+                        help="input USB device")
     args = parser.parse_args()
     
-    d = (DartGame(DartInput(), args.players) + Logger() + Webserver())
+    d = (DartGame(args.players) + DartInput(args.dev) + Logger() + Debugger())# + Webserver())
     if args.snd == 'legacy':
         d += LegacySounds()
     elif args.snd == 'espeak':
