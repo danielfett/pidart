@@ -160,64 +160,79 @@ class DartGame(Component):
         self.flush()
 
     def hold(self, manual):
-        self.event(EnterHold(manual))
-        print "Press game or start after removing the darts"
-        while self.input.read() not in ['BSTART', 'BGAME']:
-            pass
-        self.event(LeaveHold(manual))
+        
+        
 
-    def started(self, *args):
-        state = GameState(self.players, self.startvalue)
-
-        self.event(GameInitialized(state))
-
-        while True:
-            wait_for_removal_of_darts = True
-            commit = True
-            self.event(RoundStarted(state))
-            print "=============== Round %d ===============" % state.round
-            while len(state.currentDarts) < self.NUMBEROFDARTS:
-                print "--> Now playing Dart #%d in Round %d: %s (%d Points left)" % (
-                    len(state.currentDarts)+1, 
-                    state.round, 
-                    state.players[state.currentPlayer], 
-                    state.scores[state.currentPlayer] - state.currentScore)
-                code = self.input.read()
-                if code == 'XSTUCK':
+    def receive_input(self, input):
+        in_type, in_value = input
+        if self.state.state == 'hold':
+            if in_type != 'serial' or in_value not in ['BSTART', 'BGAME']:
+                continue
+            self.state.state = 'playing' # check if we sometimes have to go to other states
+            self.event(LeaveHold(manual))
+        elif self.state.state == 'playing': 
+            print "--> Now playing Dart #%d in Round %d: %s (%d Points left)" % (
+                len(self.state.currentDarts)+1, 
+                self.state.round, 
+                self.state.players[self.state.currentPlayer], 
+                self.state.scores[self.state.currentPlayer] - self.state.currentScore)
+            if in_type == 'serial':
+                if in_value == 'XSTUCK':
                     self.event(DartStuck())
                     print "Dart is stuck, remove dart!"
-                elif code == 'BGAME': #START':
+                elif in_value == 'BGAME': #START':
                     self.event(SkipPlayer())
-                    print "Player skipped."
-                    wait_for_removal_of_darts = len(state.currentDarts)
-                    break
-                elif code == 'BGAME':
-                    self.hold(True)
-                elif code.startswith('X') or code.startswith('B'):
+                    self.finish_round(commit = True, len(self.state.currentDarts)) # hold only if there are darts sticking in the board
+                elif in_value.startswith('X') or in_value.startswith('B'):
                     self.event(CodeNotImplemented())
                     print "Not implemented: %s" % code
-                elif code.startswith('S') or code.startswith('D') or code.startswith('T'):
-                    print "Hit %s" % code
+                elif in_value.startswith('S') or in_value.startswith('D') or in_value.startswith('T'):
+                    print "Hit %s" % in_value
                     s = self.score2sum(code)
-                    res = state.add_dart(code, s)
+                    res = self.state.add_dart(code, s)
                     if res == 'bust':
                         self.event(HitBust(state, code))
                         print "BUST!"
-                        commit = False
-                        break 
+                        self.finish_round(commit = False, hold = True)
                     elif res == 'winner':
                         self.event(HitWinner(state, code))
                         print "WINNER!"
-                        break
+                        self.finish_round(commit = True, hold = True)
                     else:
                         self.event(Hit(state, code))
+                        if len(self.state.currentDarts) == self.NUMBEROFDARTS:
+                            self.finish_round(commit = True, hold = True)
 
-            self.event(RoundFinished(state))
-            if commit:
-                state.flush_round()
-            else:
-                state.cancel_round()
-            state.next_round()
+    def finish_round(self, commit, hold):
+        self.event(RoundFinished(state))
+        if commit:
+            state.flush_round()
+        else:
+            state.cancel_round()
+        state.next_round()
+        if hold:
+            self.event(EnterHold(manual))
+            self.state.state = 'hold'
+        else:
+            self.state.state = 'playing'
+            # check if round actually started?
+            self.event(RoundStarted(state))
+        
+
+    def started(self, *args):
+        self.state = GameState(self.players, self.startvalue)
+
+        self.event(GameInitialized(state))
+
+        self.state.state = 'playing'
+            wait_for_removal_of_darts = True
+            commit = True
+            
+            print "=============== Round %d ===============" % state.round
+            while len(state.currentDarts) < self.NUMBEROFDARTS:
+                code = self.input.read()
+
+                #todo...
             
             if wait_for_removal_of_darts:
                 self.hold(False)
