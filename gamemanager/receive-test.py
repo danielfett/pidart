@@ -4,7 +4,7 @@ import serial
 from time import sleep
 from codes import FIELDCODES
 
-DEVICE = '/dev/ttyUSB0'
+DEVICE = '/dev/ttyACM0'
 
 ser = serial.Serial(DEVICE, 115200)
 sleep(1) # for arduino

@@ -8,7 +8,16 @@ class Logger(Component):
         print "Logger started."
         filename = datetime.now().strftime("%Y-%m-%d--%H:%M.dartlog")
         self.file = open(filename, 'w')
-        self.file.write("Players: %s\n" % (' '.join(state.players)))
+        self.file.write("Players:%s " % (','.join(state.players)))
 
-    def round_finished(self, state):
-        self.file.write("%s: %s\n" % (state.players[state.currentPlayer], ' '.join(state.currentDarts)))
+    def hit(self, state, code):
+        self.file.write('%s ' % code)
+
+    def hit_bust(self, state, code):
+        self.file.write('%s (busted) ' % code)
+
+    def hit_winner(self, state, code):
+        self.file.write('%s (checkout) ' % code)
+
+    def round_started(self, state):
+        self.file.write('| (%s) ' % state.players[state.currentPlayer])
