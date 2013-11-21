@@ -73,10 +73,10 @@ class Webserver(Component):
 
     def serialize_full(self, state):
         a = self.serialize_short(state)
-        a['ranking'] = state.player_list(sortby = 'order')
+        a['ranking'] = state.player_list(sortby = 'started')
         return a
 
-    @handler('game_initialized', 'round_finished', 'round_started')
+    @handler('game_initialized', 'frame_finished', 'frame_started')
     def _send_full_state(self, state):
         self.factory.broadcast(self.serialize_full(state))
 

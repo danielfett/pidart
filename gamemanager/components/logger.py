@@ -19,5 +19,5 @@ class Logger(Component):
     def hit_winner(self, state, code):
         self.file.write('%s (checkout) ' % code)
 
-    def round_started(self, state):
+    def frame_started(self, state):
         self.file.write('| (%s) ' % state.players[state.currentPlayer])
