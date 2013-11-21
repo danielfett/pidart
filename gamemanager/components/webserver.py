@@ -37,14 +37,14 @@ class DartsServerFactory(WebSocketServerFactory):
 
    def register(self, client):
        if not client in self.clients:
-           print "registered client " + client.peerstr
+           print ("registered client " + client.peerstr)
            self.clients.append(client)
            if len(self.connectMessage):
                client.sendMessage(simplejson.dumps(self.connectMessage))
 
    def unregister(self, client):
        if client in self.clients:
-           print "unregistered client " + client.peerstr
+           print ("unregistered client " + client.peerstr)
            self.clients.remove(client)
 
 class Webserver(Component):

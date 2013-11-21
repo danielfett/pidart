@@ -26,13 +26,13 @@ class LegacySounds(Component):
     def play(self, sound):
         self.sounds[sound].play() 
 
-    def dart_stuck(self, *args):
+    def DartStuck(self, *args):
         self.play('beep')
 
-    def skip_player(self, *args):
+    def SkipPlayer(self, *args):
         self.play('beep')
 
-    def hit(self, state, code):
+    def Hit(self, state, code):
         if code == 'D25':
             self.play('bullseye')
         elif code.startswith('T'):
@@ -42,23 +42,22 @@ class LegacySounds(Component):
         else:
             self.play('beep')
 
-    def hit_bust(self, *args):
+    def HitBust(self, *args):
         self.play('winner') # sound is missing!
 
-    def hit_winner(self, state, code):
+    def HitWinner(self, state, code):
         self.play('finish')
-        print repr(state.winners())
         if len(state.winners()) == 0:
             sleep(3.591)
             self.play('winner')
 
-    def enter_hold(self, manual):
+    def EnterHold(self, manual):
         if manual:
             self.play('beep')
 
-    def leave_hold(self, manual):
+    def LeaveHold(self, manual):
         if manual:
             self.play('beep')
 
-    def round_started(self, *args):
+    def FrameStarted(self, *args):
         self.play('nextplayer')
