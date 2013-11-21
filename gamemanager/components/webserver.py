@@ -77,19 +77,19 @@ class Webserver(Component):
         a['ranking'] = state.player_list(sortby = 'started')
         return a
 
-    @handler('game_initialized', 'frame_finished', 'frame_started')
+    @handler('GameInitialized', 'FrameFinished', 'FrameStarted')
     def _send_full_state(self, state):
         self.factory.broadcast(self.serialize_full(state))
 
-    @handler('hit', 'hit_bust', 'hit_winner')
+    @handler('Hit', 'HitBust', 'HitWinner')
     def _send_short_state(self, state, code):
         self.factory.broadcast(self.serialize_short(state))
 
-    def enter_hold(self, manual):
+    def EnterHold(self, manual):
         self.factory.broadcast({'state': 'hold'})
 
-    def leave_hold(self, manual):
+    def LeaveHold(self, manual):
         self.factory.broadcast({'state': 'normal'})
 
-    def game_over(self, manual):
+    def GameOver(self, manual):
         self.factory.broadcast({'state': 'gameover'})

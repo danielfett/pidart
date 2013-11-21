@@ -8,7 +8,7 @@ from circuits.io.serial import Serial
 from circuits.io.file import File
 import argparse
 
-#from components.webserver import Webserver
+from components.webserver import Webserver
 from components.logger import Logger
 
 class ReceiveInput(Event):
@@ -196,11 +196,13 @@ class DartGame(Component):
         if self.state.state == 'hold_in_frame':
             if in_type == 'code' and in_value in ['BSTART', 'BGAME']: 
                 self.event(LeaveHold(True))
+                self.state.next_frame()
                 self.start_frame()
         elif self.state.state == 'hold_between_frames':
             if in_type == 'code' and in_value in ['BSTART', 'BGAME']  or \
                     in_type == 'generic' and in_value == 'next_player': 
                 self.event(LeaveHold(False))
+                self.state.next_frame()
                 self.start_frame()
         elif self.state.state == 'playing': 
             '''            print "[%s] --> dart #%d in Round %d (%d Points left)" % (
@@ -254,11 +256,11 @@ class DartGame(Component):
             for w in self.state.player_list(sortby='rank'):
                 print ("%d: %s" % (w['rank'] + 1, w['name']))
             self.state.state = 'gameover'
-        self.state.next_frame()
         if hold:
             self.event(EnterHold(False))
             self.state.state = 'hold_between_frames'
         else:
+            self.state.next_frame()
             self.start_frame()
         
     def started(self, x):
@@ -290,7 +292,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug', action='store_true', help="Enable debug output")
     args = parser.parse_args()
 
-    d = DartGame(args.players) + DartInput(args.dev)
+    d = DartGame(args.players) + DartInput(args.dev) + Webserver()
     d += Logger()
     if args.file:
         d += FileInput(args.file)
