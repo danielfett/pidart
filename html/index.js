@@ -17,6 +17,69 @@ function fitText() {
     }
 }
 
+var eloEngine = (function(){
+    var EloK = 16;
+    var EloInitR = 1500;
+    var LOSS = 0;
+    var WON = 1;
+    var DRAW = 0.5;
+
+    function elo_exp (ra, rb) {
+	return 1.0 / (1 + Math.pow(10, (rb-ra)/400.0));
+    }
+
+    function transform (ranking) {
+	var game = array();
+	$.each(ranking, function(index, info) {
+	    var player = info['name'];
+	    var wonAgainst = array();
+	    $.each(ranking, function(index2, info2) {
+		var vs = info2['name'];
+		if (player === opponent) {
+		    return;
+		}
+		if (info['rank'] == info2['rank']) {
+		    vs[opponent] = DRAW;
+		} else if (info['rank'] < info2['rank']) {
+		    vs[opponent] = WON;
+		} else {
+		    vs[opponent] = LOSS;
+		}
+	    });
+	    game[player] = vs;
+	});
+	console.debug(game);
+	return game;
+    }
+
+    function compute_ratings(old_ratings, game) {
+	var new_ratings = old_ratings;
+	$.each(game, function(playerA, results) {
+	    var ra = (typeof(old_ratings[playerA]) === 'undefined')
+		? EloInitR
+		: old_ratings[playerA];
+	    var sum = 0;
+	    var exp_sum = 0;
+	    $.each(results, function (playerB, result) {
+		var sum += result;
+		var rb = (typeof(old_ratings[playerB]) === 'undefined')
+		    ? EloInitR
+		    : old_ratings[playerB];
+		exp_sum += elo_exp(ra, rb);
+	    });
+	    var new_ra = ra + EloK * (sum - exp_sum);
+	    var new_ratings[playerA] = new_ra;
+	});
+	return new_ratings;
+    }
+
+    var calc = function(old_ratings, ranking) {
+	return compute_ratings(old_ratings, transform(ranking));
+    }
+
+})();
+
+
 $(window).resize(function() {
     fitText()
 });
@@ -93,12 +156,21 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	
 	sock.onmessage = function(e) {
 	    console.log("Got message: " + e.data);
-	    $scope.state = $.extend($scope.state, JSON.parse(e.data));
-	    $scope.updateChart();
+	    var oldPlayers = typeof($scope.state.players) === 'undefined' ? null : $scope.state.players.join();
+	    var newState = JSON.parse(e.data);
+	    var newPlayers = typeof(newState.players) === 'undefined' ? null : newState.players.join();
+	    $scope.state = $.extend($scope.state, newState);
+	    if (oldPlayers != newPlayers) {
+		$scope.updateChartFull();
+	    } else if (typeof(newState.ranking) !== 'undefined') { 
+		$scope.updateChartRanking();
+	    }
 	    $scope.$apply();
 	    fitText();
 	}
     });
+
+    $scope.latestScores = {};
 
     $scope.updateChart = function() {
 	$.ajax('http://infsec.uni-trier.de/dartenbank/rpc/elo.php?count=30', {
@@ -113,26 +185,44 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 		    label: 'Date', 
 		    type: 'string'
 		});
-		for (var i = 0; i < $scope.state.players.length; i++) {
+		$.each($scope.state.players, function (i, name) {
 		    $scope.chart.data.cols.push({
-			id: $scope.state.players[i], 
-			label: $scope.state.players[i], 
+			id: name, 
+			label: name, 
 			type: 'number'
 		    });
-		}
-		console.debug($scope.chart.data.cols);
-		for (var date in data) {
-		    var currentRow = [{v: date.split(' ')[0]}];
-		    for (var i = 0; i < $scope.state.players.length; i++) {
-			if ($scope.state.players[i] in data[date]) {
-			    currentRow.push({v: Math.round(data[date][$scope.state.players[i]])});
-			}
-		    }
-		    $scope.chart.data.rows.push({c: currentRow});
-		}
-		console.debug($scope.chart.data.rows);
+		});
+		
+		$.each(data, function(date, scores) {
+		    $scope.chart.data.rows.push(
+			$scope.getChartRowFromRatings(
+			    date.split(' ')[0], 
+			    scores
+			)
+		    );
+		    $scope.latestScores = scores;
+		});
+		$scope.chart.data.rows.push(
+		    $scope.getChartRowFromRatings(
+			'today', 
+			eloEngine.calc(
+			    $scope.latestScores, 
+			    $scope.ranking
+			)
+		    )
+		);
 	    });
     };
+
+    $scope.getChartRowFromRatings = function(date, ratings) {
+	var currentRow = [{v: date}];
+	$.each($scope.state.players, function(i, player) {
+	    if (player in scores) {
+		currentRow.push({v: Math.round(scores[player])});
+	    }
+	});
+	return {c: currentRow};
+    }
     
     $('#refresh').click(function() {
 	$scope.updateChart();
