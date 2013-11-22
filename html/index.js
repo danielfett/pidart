@@ -61,14 +61,12 @@ var eloEngine = (function(){
 	    var sum = 0;
 	    var exp_sum = 0;
 	    $.each(results, function (playerB, result) {
-		var sum += result;
-		var rb = (typeof(old_ratings[playerB]) === 'undefined')
-		    ? EloInitR
-		    : old_ratings[playerB];
+		sum += result;
+		var rb = (typeof(old_ratings[playerB]) === 'undefined') ? EloInitR : old_ratings[playerB];
 		exp_sum += elo_exp(ra, rb);
 	    });
 	    var new_ra = ra + EloK * (sum - exp_sum);
-	    var new_ratings[playerA] = new_ra;
+	    new_ratings[playerA] = new_ra;
 	});
 	return new_ratings;
     }
@@ -131,7 +129,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
     };
     
     $(document).ready(function() {
-	var wsuri = window.location.href.replace(/^http(s?:\/\/.*):\d+\/.*$/, 'ws$1:9000/');
+	var wsuri = window.location.href.replace(/^http(s?:\/\/.*):\d+\/.*$/, 'ws$1:8080/websocket');
 	if ("WebSocket" in window) {
 	    sock = new ReconnectingWebSocket(wsuri);
 	} else {
@@ -142,11 +140,11 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	
 	sock.onopen = function() {
 	    console.log("Connected to " + wsuri);
+	    sock.send("hello");
 	}
 	
 	sock.onclose = function(e) {
 	    console.log("Connection closed (wasClean = " + e.wasClean + ", code = " + e.code + ", reason = '" + e.reason + "')");
-	    sock = null;
 	    if ($scope.state.state != 'gameover') {
 		$scope.state.state = 'connlost';
 	    }

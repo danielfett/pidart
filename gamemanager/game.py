@@ -264,7 +264,7 @@ class DartGame(Component):
             self.start_frame()
         
     def started(self, x):
-        self.fire(StartGame(self.players))
+        self.event(StartGame(self.players))
 
     def StartGame(self, players):
         print ('start game')
@@ -286,14 +286,16 @@ if __name__ == "__main__":
     parser.add_argument('--snd', default='legacy',
                         help="sound system (none/legacy/espeak)")
     parser.add_argument('--dev', default='/dev/ttyUSB0', 
-                        help="input USB device")
+                        help="input USB device (use none for no USB input)")
     parser.add_argument('--file', help="Read input from this file.")
 
     parser.add_argument('--debug', action='store_true', help="Enable debug output")
     args = parser.parse_args()
 
-    d = DartGame(args.players) + DartInput(args.dev) + Webserver()
+    d = DartGame(args.players) + Webserver
     d += Logger()
+    if args.dev != 'none':
+        d += DartInput(args.dev)
     if args.file:
         d += FileInput(args.file)
     if args.debug:

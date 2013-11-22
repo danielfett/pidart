@@ -1,69 +1,35 @@
 """ Websockets connector """
 
-from circuits import Component
-from circuits.core import handler
-from twisted.internet import reactor
-from twisted.python import log
-from twisted.web.server import Site
-from twisted.web.static import File
-
-from autobahn.websocket import WebSocketServerFactory, \
-                               WebSocketServerProtocol, \
-                               listenWS
+from circuits import Component, Event, handler
+from circuits.web.dispatchers import WebSockets
+from circuits.web import Server, Controller, Logger, Static
+from circuits.net.sockets import write, connect
+#from circuits.web.tools import check_auth, basic_auth
  
-from threading import Thread
-from Queue import Queue
 import simplejson
 
-class DartsProtocol(WebSocketServerProtocol):
+class SendState(Event):
+    pass
+
+class DartsServer(Component):
+    channel = "wsserver"
+
     def __init__(self):
-        self.queue = Queue()
+        Component.__init__(self)
+        self.connectMessage = {'state': 'normal'}
 
-    def onOpen(self):
-        self.factory.register(self)     
+    def read(self, sock, data):
+        #msg_json = simplejson.dumps(self.connectMessage)
+        #self.fireEvent(write('x', msg_json))
+        return 'test'
 
-class DartsServerFactory(WebSocketServerFactory):
-   def __init__(self, url, debug = False, debugCodePaths = False):
-       WebSocketServerFactory.__init__(self, url, debug = debug, debugCodePaths = debugCodePaths)
-       self.clients = []
-       self.connectMessage = {}
-      
-   def broadcast(self, msg):
-       msg_json = simplejson.dumps(msg)
-       for client in self.clients:
-           client.sendMessage(msg_json)
-       self.connectMessage.update(msg)
-       
+    def SendState(self, msg):
+        msg_json = simplejson.dumps(msg)
+        self.fireEvent(write('x', msg_json))
+        self.connectMessage.update(msg)
 
-   def register(self, client):
-       if not client in self.clients:
-           print ("registered client " + client.peerstr)
-           self.clients.append(client)
-           if len(self.connectMessage):
-               client.sendMessage(simplejson.dumps(self.connectMessage))
 
-   def unregister(self, client):
-       if client in self.clients:
-           print ("unregistered client " + client.peerstr)
-           self.clients.remove(client)
-
-class Webserver(Component):
-    def __init__(self):
-        super(Webserver, self).__init__()
-        self.factory = DartsServerFactory("ws://localhost:9000")
-
-        self.factory.protocol = DartsProtocol
-        self.factory.setProtocolOptions(allowHixie76 = True)
-        self.factory.broadcast({'state': 'normal'})
-        listenWS(self.factory)
-        
-        webdir = File("../html/")
-        web = Site(webdir)
-        reactor.listenTCP(8080, web)
-        self.thread = Thread(target=reactor.run, args=(), kwargs={'installSignalHandlers':0})
-        self.thread.daemon = True
-        self.thread.start()
-
+class DartsServerController(Component):
     def serialize_short(self, state):
         return {
             'currentPlayer': state.players[state.currentPlayer],
@@ -79,17 +45,42 @@ class Webserver(Component):
 
     @handler('GameInitialized', 'FrameFinished', 'FrameStarted')
     def _send_full_state(self, state):
-        self.factory.broadcast(self.serialize_full(state))
+        self.fire(SendState(self.serialize_full(state)))
 
     @handler('Hit', 'HitBust', 'HitWinner')
     def _send_short_state(self, state, code):
-        self.factory.broadcast(self.serialize_short(state))
+        self.fire(SendState(self.serialize_short(state)))
 
     def EnterHold(self, manual):
-        self.factory.broadcast({'state': 'hold'})
+        self.fire(SendState({'state': 'hold'}))
 
     def LeaveHold(self, manual):
-        self.factory.broadcast({'state': 'normal'})
+        self.fire(SendState({'state': 'normal'}))
 
     def GameOver(self, manual):
-        self.factory.broadcast({'state': 'gameover'})
+        self.fire(SendState({'state': 'gameover'}))
+
+
+class Root(Controller):
+
+    def index(self):
+        return 
+    '''
+    def protected(self):
+        realm = "Test"
+        users = {"admin": "admin"}
+        encrypt = str
+
+        if check_auth(self.request, self.response, realm, users, encrypt):
+            return "Hello %s" % self.request.login
+
+        return basic_auth(self.request, self.response, realm, users, encrypt)
+    '''
+
+Webserver = Server(('0.0.0.0', 8080))
+Static(docroot="../html/").register(Webserver)
+DartsServer().register(Webserver)
+DartsServerController().register(Webserver)
+Root().register(Webserver)
+#Logger().register(Webserver)
+WebSockets("/websocket").register(Webserver)
