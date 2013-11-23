@@ -47,7 +47,7 @@ class LegacySounds(Component):
 
     def HitWinner(self, state, code):
         self.play('finish')
-        if len(state.winners()) == 0:
+        if len(state.winners()) == 1:
             sleep(3.591)
             self.play('winner')
 

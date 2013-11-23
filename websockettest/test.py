@@ -46,7 +46,7 @@ app.run()
 
 from circuits import Component
 from circuits.web.dispatchers import WebSockets
-from circuits.web import Server, Controller, Logger
+from circuits.web import Server, Controller, Logger, Static
 from circuits.net.sockets import write
 
 
@@ -55,7 +55,8 @@ class Echo(Component):
     channel = "wsserver"
 
     def read(self, sock, data):
-        self.fireEvent(write(sock, "Received: " + data))
+        print "Received somehing, now sending:"
+        self.fire(write(sock, "Received: " + data))
 
 
 class Root(Controller):
@@ -67,5 +68,6 @@ app = Server(("0.0.0.0", 8000))
 Echo().register(app)
 Root().register(app)
 Logger().register(app)
+Static().register(app)
 WebSockets("/websocket").register(app)
 app.run()

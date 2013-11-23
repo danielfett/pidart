@@ -87,8 +87,9 @@
 		<th></th>
 		<th><a href="" ng-click="predicate='p.rank'">Rank</th>
 		<th><a href="" ng-click="predicate='p.started'">Name</a></th>
-		<th>Last Round</th>
+		<th>Last Frame</th>
 		<th>Score</th>
+		<th>Skip?</th>
 	      </tr>
 	    </thead>
 	    <tbody>
@@ -99,8 +100,9 @@
 		</td>
 		<td>{{p.rank + 1}}</td>
 		<td>{{p.name}}</td>
-		<td><span ng-repeat="d in p.last_round track by $index" class="dart">{{d}} </span></td>
+		<td><span ng-repeat="d in p.last_frame.darts track by $index" class="dart">{{d}} </span><span ng-if="p.last_frame.text"> = </span><span class="darttext">{{p.last_frame.text}}</span> </td>
 		<td>{{p.score}}</td>
+		<td><input type="checkbox" ng-model="p.skipped" ng-click="skipPlayer($index)"></td>
 	      </tr>
 	    </tbody>
 	  </table>

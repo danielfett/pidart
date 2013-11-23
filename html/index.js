@@ -17,7 +17,7 @@ function fitText() {
     }
 }
 
-var eloEngine = (function(){
+var eloEngine = new function(){
     var EloK = 16;
     var EloInitR = 1500;
     var LOSS = 0;
@@ -29,24 +29,25 @@ var eloEngine = (function(){
     }
 
     function transform (ranking) {
-	var game = array();
+	var game = {};
 	$.each(ranking, function(index, info) {
 	    var player = info['name'];
-	    var wonAgainst = array();
+	    var against = {};
 	    $.each(ranking, function(index2, info2) {
-		var vs = info2['name'];
+		var opponent = info2['name'];
 		if (player === opponent) {
 		    return;
 		}
 		if (info['rank'] == info2['rank']) {
-		    vs[opponent] = DRAW;
+		    against[opponent] = DRAW;
 		} else if (info['rank'] < info2['rank']) {
-		    vs[opponent] = WON;
+		    against[opponent] = WON;
 		} else {
-		    vs[opponent] = LOSS;
+		    against[opponent] = LOSS;
 		}
+		console.debug("ELO: " + info['name'] + " vs. " + info2['name'] + ": " + against[opponent]);
 	    });
-	    game[player] = vs;
+	    game[player] = against;
 	});
 	console.debug(game);
 	return game;
@@ -66,16 +67,17 @@ var eloEngine = (function(){
 		exp_sum += elo_exp(ra, rb);
 	    });
 	    var new_ra = ra + EloK * (sum - exp_sum);
+	    console.debug("ELO for player " + playerA + " was " + new_ratings[playerA] + " -> " + new_ra);
 	    new_ratings[playerA] = new_ra;
 	});
 	return new_ratings;
     }
 
-    var calc = function(old_ratings, ranking) {
+    this.calc = function(old_ratings, ranking) {
 	return compute_ratings(old_ratings, transform(ranking));
     }
 
-})();
+};
 
 
 $(window).resize(function() {
@@ -134,7 +136,6 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	    sock = new ReconnectingWebSocket(wsuri);
 	} else {
 	    console.error("Browser does not support WebSocket!");
-	    window.location = "http://autobahn.ws/unsupportedbrowser";
 	    return;
 	}
 	
@@ -161,20 +162,34 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	    if (oldPlayers != newPlayers) {
 		$scope.updateChartFull();
 	    } else if (typeof(newState.ranking) !== 'undefined') { 
-		$scope.updateChartRanking();
+		$scope.updateChartRanking(true);
 	    }
 	    $scope.$apply();
 	    fitText();
 	}
+
+	$scope.skipPlayer = function(player) {
+	    sock.send("cmd:skip-player " + player);
+	}
+    
     });
 
     $scope.latestScores = {};
 
-    $scope.updateChart = function() {
+    $scope.usualSuspects = ['DF', 'ES', 'GS', 'OC', 'RK', 'TT'];
+    $scope.playersInChart = [];
+
+    $scope.updateChartFull = function() {
 	$.ajax('http://infsec.uni-trier.de/dartenbank/rpc/elo.php?count=30', {
 	    dataType: 'JSON'
 	})
 	    .done(function(data) {
+		$scope.playersInChart = $.merge([], $scope.usualSuspects);
+		$.each($scope.state.players, function (i, name) {
+		    if ($scope.playersInChart.indexOf(name) === -1) {
+			$scope.playersInChart.push(name);
+		    }
+		});
 		console.log("Updating chart.");
 		$scope.chart.data.cols = [];
 		$scope.chart.data.rows = [];
@@ -183,7 +198,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 		    label: 'Date', 
 		    type: 'string'
 		});
-		$.each($scope.state.players, function (i, name) {
+		$.each($scope.playersInChart, function (i, name) {
 		    $scope.chart.data.cols.push({
 			id: name, 
 			label: name, 
@@ -200,29 +215,38 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 		    );
 		    $scope.latestScores = scores;
 		});
-		$scope.chart.data.rows.push(
-		    $scope.getChartRowFromRatings(
-			'today', 
-			eloEngine.calc(
-			    $scope.latestScores, 
-			    $scope.ranking
-			)
-		    )
-		);
+		$scope.updateChartRanking(false);
 	    });
+    };
+
+    $scope.updateChartRanking = function(replace) {
+	if (replace) {
+	    $scope.chart.data.rows.pop();
+	}
+	var todaysRanking = eloEngine.calc($scope.latestScores, $scope.state.ranking);
+	$scope.chart.data.rows.push(
+	    $scope.getChartRowFromRatings(
+		'today', 
+		todaysRanking
+	    )
+	);
+	$scope.$apply();
     };
 
     $scope.getChartRowFromRatings = function(date, ratings) {
 	var currentRow = [{v: date}];
-	$.each($scope.state.players, function(i, player) {
-	    if (player in scores) {
-		currentRow.push({v: Math.round(scores[player])});
+	$.each($scope.playersInChart, function(i, player) {
+	    if (player in ratings) {
+		currentRow.push({v: Math.round(ratings[player])});
+	    } else {
+		currentRow.push({});
 	    }
 	});
 	return {c: currentRow};
-    }
+    };
+
     
     $('#refresh').click(function() {
-	$scope.updateChart();
+	$scope.updateChartFull();
     });
 });

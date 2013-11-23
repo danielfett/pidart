@@ -8,6 +8,8 @@ from circuits.net.sockets import write, connect
  
 import simplejson
 
+from events import ReceiveInput
+
 class SendState(Event):
     pass
 
@@ -17,15 +19,22 @@ class DartsServer(Component):
     def __init__(self):
         Component.__init__(self)
         self.connectMessage = {'state': 'normal'}
+        self.knownSockets = []
 
     def read(self, sock, data):
-        #msg_json = simplejson.dumps(self.connectMessage)
-        #self.fireEvent(write('x', msg_json))
-        return 'test'
+        if data == 'hello':
+            msg_json = simplejson.dumps(self.connectMessage)
+            self.fireEvent(write(sock, msg_json))
+            self.knownSockets.append(sock)
+        elif data.startswith('cmd:'):
+            cmd, command = data.split(':')
+            self.fireEvent(ReceiveInput('command', command))
 
+    @handler('SendState')
     def SendState(self, msg):
         msg_json = simplejson.dumps(msg)
-        self.fireEvent(write('x', msg_json))
+        for s in self.knownSockets:
+            self.fireEvent(write(s, msg_json))
         self.connectMessage.update(msg)
 
 
