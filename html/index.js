@@ -88,7 +88,7 @@ $(document).ready(function() {
     fitText()
 });
 
-angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope) {
+angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', function ($scope, $timeout, $filter) {
     $scope.state = {};
 
     var history = {};
@@ -171,6 +171,27 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	$scope.skipPlayer = function(player) {
 	    sock.send("cmd:skip-player " + player);
 	}
+	
+
+	$scope.newGame = function() {
+	    if ($scope.selectedPlayers.length < 2) {
+		alert("Please select at least two players.");
+		return;
+	    }
+	    if ($scope.state.state != 'gameover') {
+		if (! confirm("Do you want to cancel the current game?")) {
+		    return;
+		}
+	    }
+	    $scope.selectedPlayers.sort(function (a, b) {
+		return ((a.rank < b.rank) ? -1 : ((a.rank > b.rank) ? 1 : 0));
+	    });
+	    var players = [];
+	    for (var i = 0; i < $scope.selectedPlayers.length; i ++) {
+		players.push($scope.selectedPlayers[i].name);
+	    }
+	    sock.send("cmd:new-game " + players.join(','));
+	};
 
     });
 
@@ -216,6 +237,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 		    $scope.latestScores = scores;
 		});
 		$scope.updateChartRanking(false);
+		$scope.updateAvailablePlayers();
 	    });
     };
 
@@ -249,4 +271,40 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
     $('#refresh').click(function() {
 	$scope.updateChartFull();
     });
+
+    $scope.availablePlayers = [];
+    $scope.selectedPlayers = [];
+    $scope.sortSelectedPlayers = function() {
+	return $filter('orderBy')($scope.selectedPlayers, '-games');
+    };
+
+    $scope.updateAvailablePlayers = function() {
+	$.ajax('http://infsec.uni-trier.de/dartenbank/rpc/get-players.php', {
+	    dataType: 'JSON'
+	})
+	    .done(function(data) {
+		$scope.availablePlayers = [];
+		$.each(data, function(name, games) {
+		    var rank = 1500;
+		    if (typeof($scope.latestScores[name]) != 'undefined') {
+			rank = $scope.latestScores[name];
+		    }
+		    $scope.availablePlayers.push({name: name, games: games, rank:rank});
+		});
+	    });
+    };
+
+    $scope.addPlayer = function() {
+	if ($scope.newPlayerName.length < 2 || $scope.newPlayerName.length > 3) {
+	    alert("Player name must have 2 or 3 characters.");
+	    return;
+	}
+	$.each($scope.availablePlayers, function(i, data) {
+	    if (data.name == $scope.newPlayerName) {
+		alert("Player name already exists.");
+		return;
+	    }
+	});
+	$scope.availablePlayers.push({name: $scope.newPlayerName, games: 0, rank:0});
+    };
 });

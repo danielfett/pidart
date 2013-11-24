@@ -8,7 +8,7 @@ from circuits.net.sockets import write, connect
  
 import simplejson
 
-from events import ReceiveInput, SkipPlayer
+from events import ReceiveInput, SkipPlayer, StartGame
 
 class SendState(Event):
     pass
@@ -30,6 +30,9 @@ class DartsServer(Component):
             cmd, params = data.split(' ')
             if cmd == 'cmd:skip-player':
                 self.fireEvent(SkipPlayer(int(params)))
+            if cmd == 'cmd:new-game':
+                players = params.split(',')
+                self.fireEvent(StartGame(players));
 
     @handler('SendState')
     def SendState(self, msg):

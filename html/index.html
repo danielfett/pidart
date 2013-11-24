@@ -21,7 +21,6 @@
       <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
     <![endif]-->
     <link rel="stylesheet" href="css/font-awesome.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular.js"></script>
   </head>
 
   <body ng-app="darts"  ng-controller="DartCtrl">
@@ -76,6 +75,7 @@
       <ul class="nav nav-tabs" ng-if="state.state != 'gameover'">
 	<li><a href="#order" data-toggle="tab">Order</a></li>
 	<li><a href="#stats" data-toggle="tab">Dartenbank Score</a></li>
+	<li><a href="#newgame" data-toggle="tab">New Game</a></li>
       </ul>
 
       <!-- Tab panes -->
@@ -114,6 +114,42 @@
 	  </div>
 	  <a href="#" id="refresh">refresh</a>
 	</div>
+	<div class="tab-pane" id="newgame">
+	  <div class="row">
+	    <div class="col-md-6">
+	      <div class="row">
+		<div class="col-md-7">
+		  <h2>Available Players</h2>
+		</div>
+		<div class="col-md-3">
+		  <input type="text" class="form-control" ng-model="newPlayerName"
+			 placeholder="XYZ" style="margin-top: 1em">
+		</div>
+		<div class="col-md-2">
+		  <input class="btn btn-primary" type="submit" value="add" style="margin-top: 1em;" ng-click="addPlayer()">
+		</div>
+	      </div>
+	      <div class="dropfrom" data-drop="true" ng-model="availablePlayers" jqyoui-droppable="{multiple:true}">
+		<div class="btn btn-info btn-dragdrop" ng-repeat="p in availablePlayers | orderBy:p.rank" ng-show="p.name" ng-model="availablePlayers" data-drag="true" data-jqyoui-options="{revert: 'invalid'}" jqyoui-draggable="{index: {{$index}}}">
+		  {{p.name}}
+		</div>
+	      </div>
+	    </div>
+	    <div class="col-md-6">
+	      <h2>Selected Players</h2>
+	      
+	      <div class="dropto" data-drop="true" ng-model="selectedPlayers" jqyoui-droppable="{multiple:true, applyFilter: 'sortSelectedPlayers'}">
+		<div class="btn btn-info btn-dragdrop" ng-repeat="p in selectedPlayers | orderBy:'rank'" data-drag="true" ng-model="selectedPlayers" data-jqyoui-options="{revert: 'invalid'}" jqyoui-draggable="{index: {{$index}}, applyFilter: 'sortSelectedPlayers'}">
+		  {{p.name}} ({{p.rank | number:0}})
+		</div>
+	      </div>
+	    </div>
+	  </div>	
+	  
+	  <div class="col-md-2 col-md-offset-10">
+	    <input class="btn btn-primary" type="submit" value="start new game" style="margin-top: 1em;" ng-click="newGame()">
+	  </div>
+	</div>
       </div>
       
 
@@ -123,10 +159,13 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="js/jquery-1.10.2.min.js"></script>
+    <script src="js/jquery-ui.min.js"></script>
+    <script src="js/angular.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/reconnectingWebsocket.js"></script>
     <script src="js/ng-google-chart.js"></script>
+    <script src="js/angular-dragdrop.js"></script>
     <script src="index.js"></script>
   </body>
 </html>

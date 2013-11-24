@@ -40,3 +40,15 @@ body {
 .table {
     font-size: large;
 }
+
+.dropto, .dropfrom { 
+    height: 15em;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.btn-dragdrop {
+    cursor: -webkit-grab;
+    margin: 3px;
+}
