@@ -45,7 +45,8 @@ class DartsServerController(Component):
             'currentPlayer': state.currentPlayer.name,
             'currentDarts': state.currentDarts,
             'currentScore': state.currentPlayer.score - state.currentScore,
-            'players': [p.name for p in state.players]
+            'players': [p.name for p in state.players],
+            'state': state.state
             }
 
     def serialize_full(self, state):

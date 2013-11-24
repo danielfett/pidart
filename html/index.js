@@ -54,7 +54,7 @@ var eloEngine = new function(){
     }
 
     function compute_ratings(old_ratings, game) {
-	var new_ratings = old_ratings;
+	var new_ratings = $.extend(true, {}, old_ratings);
 	$.each(game, function(playerA, results) {
 	    var ra = (typeof(old_ratings[playerA]) === 'undefined')
 		? EloInitR
@@ -90,7 +90,7 @@ $(document).ready(function() {
 
 angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope) {
     $scope.state = {};
-    
+
     var history = {};
     history.type="LineChart";
 //    history.displayed = false;
@@ -129,7 +129,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
             $(img).css("width", $(img).attr("width")).css("height", $(img).attr("height"));
         });
     };
-    
+
     $(document).ready(function() {
 	var wsuri = window.location.href.replace(/^http(s?:\/\/.*):\d+\/.*$/, 'ws$1:8080/websocket');
 	if ("WebSocket" in window) {
@@ -138,12 +138,12 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	    console.error("Browser does not support WebSocket!");
 	    return;
 	}
-	
+
 	sock.onopen = function() {
 	    console.log("Connected to " + wsuri);
 	    sock.send("hello");
 	}
-	
+
 	sock.onclose = function(e) {
 	    console.log("Connection closed (wasClean = " + e.wasClean + ", code = " + e.code + ", reason = '" + e.reason + "')");
 	    if ($scope.state.state != 'gameover') {
@@ -152,7 +152,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	    $scope.$apply();
 	    fitText();
 	}
-	
+
 	sock.onmessage = function(e) {
 	    console.log("Got message: " + e.data);
 	    var oldPlayers = typeof($scope.state.players) === 'undefined' ? null : $scope.state.players.join();
@@ -161,7 +161,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	    $scope.state = $.extend($scope.state, newState);
 	    if (oldPlayers != newPlayers) {
 		$scope.updateChartFull();
-	    } else if (typeof(newState.ranking) !== 'undefined') { 
+	    } else if (typeof(newState.ranking) !== 'undefined') {
 		$scope.updateChartRanking(true);
 	    }
 	    $scope.$apply();
@@ -171,7 +171,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	$scope.skipPlayer = function(player) {
 	    sock.send("cmd:skip-player " + player);
 	}
-    
+
     });
 
     $scope.latestScores = {};
@@ -194,22 +194,22 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 		$scope.chart.data.cols = [];
 		$scope.chart.data.rows = [];
 		$scope.chart.data.cols.push({
-		    id: 'date', 
-		    label: 'Date', 
+		    id: 'date',
+		    label: 'Date',
 		    type: 'string'
 		});
 		$.each($scope.playersInChart, function (i, name) {
 		    $scope.chart.data.cols.push({
-			id: name, 
-			label: name, 
+			id: name,
+			label: name,
 			type: 'number'
 		    });
 		});
-		
+
 		$.each(data, function(date, scores) {
 		    $scope.chart.data.rows.push(
 			$scope.getChartRowFromRatings(
-			    date.split(' ')[0], 
+			    date.split(' ')[0],
 			    scores
 			)
 		    );
@@ -226,7 +226,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	var todaysRanking = eloEngine.calc($scope.latestScores, $scope.state.ranking);
 	$scope.chart.data.rows.push(
 	    $scope.getChartRowFromRatings(
-		'today', 
+		'today',
 		todaysRanking
 	    )
 	);
@@ -245,7 +245,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	return {c: currentRow};
     };
 
-    
+
     $('#refresh').click(function() {
 	$scope.updateChartFull();
     });

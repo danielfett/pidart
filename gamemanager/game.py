@@ -107,7 +107,7 @@ class GameState(object):
 
             # how many rounds (at least) must be between the last man
             # standing and the worst checkout player?
-            diff = 0 if (worst_checkout.index < last_man_standing.index) else 1
+            diff = 0 if (last_man_standing.index < worst_checkout.index) else 1
             if len(last_man_standing.history) < len(worst_checkout.history) - diff:
                 return last_man_standing 
             else:
@@ -169,7 +169,7 @@ class DartGame(Component):
     def SkipPlayer(self, player):
         skipped = self.state.toggle_skip(self.state.players[player])
         if skipped and self.state.state == 'playing' and self.state.currentPlayer.index == player and len(self.state.currentDarts) == 0:
-            self.finish_frame(cancel = True)
+            self.finish_frame(hold=False, cancel=True)
 
     def ReceiveInput(self, source, value):
         print ("State is %s, input is %r from %r" % (self.state.state, value, source))
@@ -185,14 +185,15 @@ class DartGame(Component):
         elif self.state.state == 'playing': 
             if source == 'generic':
                 if value == 'next_player':
-                    self.finish_frame(hold = False)
+                    self.finish_frame(hold=False)
             if source == 'code':
                 if value == 'XSTUCK':
                     self.event(DartStuck())
                     print ("Dart is stuck, remove dart!")
                 elif value == 'BGAME': #START':
                     self.event(ManualNextPlayer())
-                    self.finish_frame() # hold only if there are darts sticking in the board
+                     # hold only if there are darts sticking in the board
+                    self.finish_frame(hold=len(self.state.currentDarts) > 0)
                 elif value.startswith('X') or value.startswith('B'):
                     self.event(CodeNotImplemented())
                     print ("Not implemented: %s" % value)
@@ -203,27 +204,27 @@ class DartGame(Component):
                     if res == Player.BUST:
                         self.event(HitBust(self.state, value))
                         print ("** BUST!")
-                        self.finish_frame()
+                        self.finish_frame(hold=True)
                     elif res == Player.CHECKOUT:
                         self.event(HitWinner(self.state, value))
                         print ("** WINNER!")
-                        self.finish_frame()
+                        self.finish_frame(hold=True)
                     else:
                         self.event(Hit(self.state, value))
                         if len(self.state.currentDarts) == self.NUMBEROFDARTS:
-                            self.finish_frame()
+                            self.finish_frame(hold=True)
         elif self.state.state == 'gameover':
             # todo
             pass
             
 
-    def finish_frame(self, hold = None, cancel = False):
+    def finish_frame(self, hold=False, cancel=False):
         self.event(FrameFinished(self.state))
         if not cancel:
             self.state.flush_frame()
         if self.state.prepare_next_player() == None:
             self.gameover()
-        elif hold or (hold == None and len(self.state.currentDarts) > 0):
+        elif hold:
             self.event(EnterHold(False))
             self.state.state = 'hold_between_frames'
         else:

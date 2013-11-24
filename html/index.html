@@ -53,7 +53,7 @@
 	Connection lost. Please reload!
       </div>
 
-      <div class="row" ng-if="state != 'gameover'">
+      <div class="row" ng-if="state.state != 'gameover'">
         <div class="col-md-4 col-xs-6 fit-height-body-4 fit-width-body-6" id="name">{{state.currentPlayer}}</div>
         <div class="col-md-4 col-xs-6 fit-height-body-4 fit-width-body-6" id="score">{{state.currentScore}}</div>
         <div class="col-xs-12 col-md-4">
@@ -64,16 +64,16 @@
 	  </div>
 	</div>
       </div>
-      <h1 ng-if="state == 'gameover'">
+      <h1 ng-if="state.state == 'gameover'">
 	Final results:
       </h1>
-      <div class="row fit-height-body-18" ng-class="{hold: state.state=='hold', play: state.state != 'hold'}">
+      <div class="row fit-height-body-18" ng-class="{hold: state.state=='hold', play: state.state != 'hold'}" ng-if="state.state != 'gameover'">
 	<span ng-if="state.state=='hold'"><i class="fa fa-stop"></i> HOLD</span>
 	<span ng-if="state.state != 'hold'"><i class="fa fa-play"></i> PLAY</span>
       </div>
 
       <!-- Nav tabs -->
-      <ul class="nav nav-tabs">
+      <ul class="nav nav-tabs" ng-if="state.state != 'gameover'">
 	<li><a href="#order" data-toggle="tab">Order</a></li>
 	<li><a href="#stats" data-toggle="tab">Dartenbank Score</a></li>
       </ul>
