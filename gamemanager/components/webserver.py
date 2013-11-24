@@ -8,7 +8,7 @@ from circuits.net.sockets import write, connect
  
 import simplejson
 
-from events import ReceiveInput
+from events import ReceiveInput, SkipPlayer
 
 class SendState(Event):
     pass
@@ -27,8 +27,9 @@ class DartsServer(Component):
             self.fireEvent(write(sock, msg_json))
             self.knownSockets.append(sock)
         elif data.startswith('cmd:'):
-            cmd, command = data.split(':')
-            self.fireEvent(ReceiveInput('command', command))
+            cmd, params = data.split(' ')
+            if cmd == 'cmd:skip-player':
+                self.fireEvent(SkipPlayer(int(params)))
 
     @handler('SendState')
     def SendState(self, msg):
@@ -41,10 +42,10 @@ class DartsServer(Component):
 class DartsServerController(Component):
     def serialize_short(self, state):
         return {
-            'currentPlayer': state.players[state.currentPlayer],
+            'currentPlayer': state.currentPlayer.name,
             'currentDarts': state.currentDarts,
-            'currentScore': state.scores[state.currentPlayer] - state.currentScore,
-            'players': state.players
+            'currentScore': state.currentPlayer.score - state.currentScore,
+            'players': [p.name for p in state.players]
             }
 
     def serialize_full(self, state):
@@ -52,7 +53,7 @@ class DartsServerController(Component):
         a['ranking'] = state.player_list(sortby = 'started')
         return a
 
-    @handler('GameInitialized', 'FrameFinished', 'FrameStarted')
+    @handler('GameInitialized', 'FrameFinished', 'FrameStarted', 'GameOver')
     def _send_full_state(self, state):
         self.fire(SendState(self.serialize_full(state)))
 
@@ -65,9 +66,6 @@ class DartsServerController(Component):
 
     def LeaveHold(self, manual):
         self.fire(SendState({'state': 'normal'}))
-
-    def GameOver(self, manual):
-        self.fire(SendState({'state': 'gameover'}))
 
 
 class Root(Controller):

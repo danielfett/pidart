@@ -29,7 +29,7 @@ class LegacySounds(Component):
     def DartStuck(self, *args):
         self.play('beep')
 
-    def SkipPlayer(self, *args):
+    def ManualNextPlayer(self, *args):
         self.play('beep')
 
     def Hit(self, state, code):
@@ -47,8 +47,8 @@ class LegacySounds(Component):
 
     def HitWinner(self, state, code):
         self.play('finish')
+        sleep(3.591)
         if len(state.winners()) == 1:
-            sleep(3.591)
             self.play('winner')
 
     def EnterHold(self, manual):

@@ -41,3 +41,6 @@ class FrameFinished(Event):
 
 class GameOver(Event):
     """ The game is over. """
+
+class ManualNextPlayer(Event):
+    """ Manual request to advance to next player """

@@ -15,8 +15,8 @@ class EspeakSounds(Component):
     def DartStuck(self, *args):
         self.say('Dart Stuck.')
 
-    def SkipPlayer(self, *args):
-        self.say('Player skipped.')
+    def ManualNextPlayer(self, *args):
+        self.say('Next player.')
 
     def Hit(self, state, code):
         sleep(0.25)
@@ -46,3 +46,6 @@ class EspeakSounds(Component):
 
     def FrameStarted(self, state):
         self.say('Next player. Is. %s.' % ('.'.join(state.players[state.currentPlayer])))
+
+    def GameOver(self, *args):
+        self.say('Game over')

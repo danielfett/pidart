@@ -1,162 +1,145 @@
 #!/usr/bin/python
 
-from codes import FIELDCODES
 from time import sleep
 from sys import exit
-from circuits import Component, Event, Debugger, handler
-from circuits.io.serial import Serial
-from circuits.io.file import File
+from operator import methodcaller, itemgetter
 from copy import deepcopy
 import argparse
-from events import *
 
+from circuits import Component, Event, Debugger, handler
+
+from events import *
 from components.webserver import Webserver
 from components.logger import Logger
-
-
-
-class DartInput(Component):
-    channel = 'serial'
-
-    def __init__(self, device):
-        super(DartInput, self).__init__()
-        Serial(device, 
-               baudrate = 115200, 
-               bufsize = 1, 
-               timeout = 0).register(self)
-        
-    def read(self, data):
-        for b in data:
-            inp = ord(b)
-            try:
-                self.fire(ReceiveInput('code', FIELDCODES[inp]))
-                self.flush()
-            except KeyError:
-                raise Exception("Unknown fieldcode: %x" % inp)
-     
-'''
-class FakeInput(object):
-    def read(self):
-        inp = raw_input("? ").strip().upper()
-        return inp
-'''
-
-class FileInput(Component):
-    def __init__(self, f):
-        super(FileInput, self).__init__()
-        with open(f, 'r') as infile:
-            self.data = infile.read().split(' ')
-        players = self.data[0].split(':')[1].split(',')
-        self.fire(StartGame(players))
-
-    def GameInitialized(self, state):
-        for s in self.data[1:]:
-            if s.startswith('('): # this is a comment, so ignore.
-                pass
-            elif s == '|': # next player
-                self.fire(ReceiveInput('generic', 'next_player'))
-            else:
-                self.fire(ReceiveInput('code', s))
-                
-
+from components.input import DartInput, FileInput
 
 """ MAIN COMPONENT """
 
-from operator import itemgetter
+class Player(object):
+    OKAY = 'ok'
+    CHECKOUT = 'checkout'
+    BUST = 'bust'
+
+    def __init__(self, name, index, startvalue):
+        self.index = index
+        self.name = name
+        self.history = []
+        self.score = startvalue
+        self.skipped = False
+        self.rank = 0
+
+    def check_score(self, score):
+        a = self.score - score
+        if a > 0:
+            return self.OKAY
+        elif a == 0:
+            return self.CHECKOUT
+        else:
+            return self.BUST
+
+    def add_score(self, darts, score):
+        text = self.check_score(score)
+        if text == self.OKAY:
+            self.score -= score
+            text = "%d" % score
+        elif text == self.CHECKOUT:
+            self.score -= score
+        self.history.append({'text': text, 'darts': darts})
+
+    def toggle_skip(self):
+        self.skipped = not self.skipped
+        return self.skipped
+
+    def get_info(self):
+        return {
+            'started': self.index, 
+            'frames': len(self.history), 
+            'last_frame': (self.history[-1] if len(self.history) else []), 
+            'score': self.score,
+            'name': self.name,
+            'skipped': self.skipped,
+            'rank': self.rank
+            }
+
+    def set_rank(self, r):
+        self.rank = r
+        
 
 class GameState(object):
     def __init__(self, players, startvalue):
         self.state = None
-        self.players = players
-        self.scores = {}
-        self.history = {}
+        self.players = []
+        for i in range(len(players)):
+            self.players.append(Player(players[i], i, startvalue))
 
-        for i in range(len(self.players)):
-            self.scores[i] = startvalue
-            self.history[i] = []
-
-        self.currentPlayer = 0
+        self.nextPlayer = self.players[0] # fails if zero players
         self.currentDarts = []
         self.currentScore = 0
-        self.skippedPlayers = []
-        self.skipOrder = []
+        self._update_ranks()
 
     def add_dart(self, dart, s):
         self.currentDarts.append(dart)
         self.currentScore += s
-        if self.scores[self.currentPlayer] - self.currentScore < 0:
-            return 'bust'
-        if self.scores[self.currentPlayer] - self.currentScore ==  0:
-            return 'winner'
+        return self.currentPlayer.check_score(self.currentScore)
 
     def flush_frame(self):
-        print "flushing with score = %d and current score %d" % (self.scores[self.currentPlayer], self.currentScore)
-        result = self.scores[self.currentPlayer] - self.currentScore
-        if result >= 0:
-            self.scores[self.currentPlayer] = result
-            text = "%d" % self.currentScore
-        elif result == 0:
-            text = "checked out"
-        else: # result < 0:
-            text = "bust"
-        self.history[self.currentPlayer].append({'text': text, 'darts': self.currentDarts})
+        self.currentPlayer.add_score(self.currentDarts, self.currentScore)
         self.currentDarts = []
         self.currentScore = 0
+        self._update_ranks()
 
-    def cancel_frame(self):
-        self.currentDarts = []
-        self.currentScore = 0
+    def _get_next_player(self):
+        lst_playing = [p for p in self.players if p.score > 0]
+        if len(lst_playing) == 0:
+            return None
+        elif len(lst_playing) == 1:
+            last_man_standing = lst_playing[0]
 
-    def next_frame(self):
-        # todo: if there exists a player who has not checked out yet, but has played less frames than the worst player that checked out already, this player may continue playing.
-        nextPlayer = None
-        winners = self.winners()
-        # first check if we can find the next player without considering the skipped ones
-        for p in range(len(self.players)):
-            if p in self.skippedPlayers or p in winners:
-                continue
-            if nextPlayer == None or len(self.history[p]) < len(self.history[nextPlayer]):
-                nextPlayer = p
-        # now check the skipped players
-        if nextPlayer == None and len(self.skippedPlayers):
-            for p in range(len(self.players)):
-                if p in winners:
-                    continue
-                if nextPlayer == None or len(self.history[p]) < len(self.history[nextPlayer]):
-                    nextPlayer = p
-            self.toggle_skip(nextPlayer)
-        if nextPlayer == None:
-            return False # todo: check these values somewhere.
-        self.currentPlayer = nextPlayer
-        return True
+            # now find the worst player that checked out
+            lst_checked_out = [p for p in self.players if p.score == 0]
+            if len(lst_checked_out) == 0:
+                return last_man_standing
+            lst_worst_checkout = sorted(lst_checked_out, key=lambda p: len(p.history))
+            worst_checkout = lst_worst_checkout[-1]
+            
+            # let our current player play only if there is a chance to
+            # be not the last
+
+            # how many rounds (at least) must be between the last man
+            # standing and the worst checkout player?
+            diff = 0 if (worst_checkout.index < last_man_standing.index) else 1
+            if len(last_man_standing.history) < len(worst_checkout.history) - diff:
+                return last_man_standing 
+            else:
+                return None
+        # else...
+        lst_next_player = sorted(lst_playing, key=lambda p: (p.skipped, len(p.history), p.index))
+        nextPlayer = lst_next_player[0]
+        if nextPlayer.skipped:
+            nextPlayer.toggle_skip()
+        return nextPlayer
+
+    def prepare_next_player(self):
+        self.nextPlayer = self._get_next_player()
+        return self.nextPlayer
+
+    def advance_player(self):
+        self.currentPlayer = self.nextPlayer
 
     def toggle_skip(self, player):
-        if player in self.skippedPlayers:
-            self.skippedPlayers.remove(player)
-            return False
-        else:
-            self.skippedPlayers.append(player)
-            return True
+        return self.players[player.index].toggle_skip()
         
     def winners(self):
-        return [x for x in range(len(self.players)) if self.scores[x] == 0]
+        return [p for p in self.players if p.score == 0]
 
-    def game_over(self):
-        return len(self.winners()) == len(self.players) - 1
+    def _update_ranks(self):
+        s = sorted(self.players, key=lambda p: (p.score, len(p.history), p.index))
+        for i in range(len(s)):
+            s[i].set_rank(i)
 
     def player_list(self, sortby = 'started'):
-        lst = [{
-                'started': x, 
-                'frames': len(self.history[x]), 
-                'last_frame': (self.history[x][-1] if len(self.history[x]) else []), 
-                'score': self.scores[x],
-                'name': self.players[x],
-                'skipped': x in self.skippedPlayers
-                } for x in range(len(self.players))]
-        s = sorted(lst, key=itemgetter('score', 'frames', 'started'))
-        for i in range(len(s)):
-            s[i]['rank'] = i
-        return sorted(s, key=itemgetter(sortby))
+        lst = [p.get_info() for p in self.players]
+        return sorted(lst, key=itemgetter(sortby))
 
 class DartGame(Component):
     NUMBEROFDARTS = 3
@@ -183,26 +166,21 @@ class DartGame(Component):
         self.fire(event)
         #self.flush()        
 
+    def SkipPlayer(self, player):
+        skipped = self.state.toggle_skip(self.state.players[player])
+        if skipped and self.state.state == 'playing' and self.state.currentPlayer.index == player and len(self.state.currentDarts) == 0:
+            self.finish_frame(cancel = True)
+
     def ReceiveInput(self, source, value):
         print ("State is %s, input is %r from %r" % (self.state.state, value, source))
-        if source == 'command':
-            cmd, param = value.split(' ')
-            if cmd == 'skip-player':
-                param = int(param)
-                skipped = self.state.toggle_skip(param)
-                if skipped and self.state.state == 'playing' and self.state.currentPlayer == param and len(self.state.currentDarts) == 0:
-                    self.event(SkipPlayer())
-                    self.finish_frame(cancel = True)
         if self.state.state == 'hold_in_frame':
             if source == 'code' and value in ['BSTART', 'BGAME']: 
                 self.event(LeaveHold(True))
-                self.state.next_frame()
                 self.start_frame()
         elif self.state.state == 'hold_between_frames':
             if source == 'code' and value in ['BSTART', 'BGAME']  or \
                     source == 'generic' and value == 'next_player': 
                 self.event(LeaveHold(False))
-                self.state.next_frame()
                 self.start_frame()
         elif self.state.state == 'playing': 
             if source == 'generic':
@@ -213,20 +191,20 @@ class DartGame(Component):
                     self.event(DartStuck())
                     print ("Dart is stuck, remove dart!")
                 elif value == 'BGAME': #START':
-                    self.event(SkipPlayer())
+                    self.event(ManualNextPlayer())
                     self.finish_frame() # hold only if there are darts sticking in the board
                 elif value.startswith('X') or value.startswith('B'):
                     self.event(CodeNotImplemented())
                     print ("Not implemented: %s" % value)
                 elif value.startswith('S') or value.startswith('D') or value.startswith('T'):
-                    print ("* %s hit %s" % (self.state.players[self.state.currentPlayer], value))
+                    print ("* %s hit %s" % (self.state.currentPlayer.name, value))
                     s = self.score2sum(value)
                     res = self.state.add_dart(value, s)
-                    if res == 'bust':
+                    if res == Player.BUST:
                         self.event(HitBust(self.state, value))
                         print ("** BUST!")
                         self.finish_frame()
-                    elif res == 'winner':
+                    elif res == Player.CHECKOUT:
                         self.event(HitWinner(self.state, value))
                         print ("** WINNER!")
                         self.finish_frame()
@@ -235,37 +213,33 @@ class DartGame(Component):
                         if len(self.state.currentDarts) == self.NUMBEROFDARTS:
                             self.finish_frame()
         elif self.state.state == 'gameover':
-            if source != 'serial' or value not in ['BSTART', 'BGAME']:
-                return
+            # todo
+            pass
             
 
     def finish_frame(self, hold = None, cancel = False):
-        self.event(FrameFinished(deepcopy(self.state)))
-        if hold == None:
-            hold = len(self.state.currentDarts) > 0
+        self.event(FrameFinished(self.state))
         if not cancel:
             self.state.flush_frame()
-        else:
-            self.state.cancel_frame()
-        print ("---- End of frame ---- (winners: %d)" % len(self.state.winners()))
-        if len(self.state.winners()) == len(self.state.players) - 1: # all have checked out
-            self.event(GameOver(self.state))
-            print ("--> Game is over! Ranking:")
-            for w in self.state.player_list(sortby='rank'):
-                print ("%d: %s" % (w['rank'] + 1, w['name']))
-            self.state.state = 'gameover'
-        if hold:
+        if self.state.prepare_next_player() == None:
+            self.gameover()
+        elif hold or (hold == None and len(self.state.currentDarts) > 0):
             self.event(EnterHold(False))
             self.state.state = 'hold_between_frames'
         else:
-            self.state.next_frame()
             self.start_frame()
+
+    def gameover(self):
+        self.state.state = 'gameover'
+        self.event(GameOver(self.state))
+        print ("--> Game is over! Ranking:")
+        for w in self.state.player_list(sortby='rank'):
+            print ("%d: %s" % (w['rank'] + 1, w['name']))
         
     def started(self, x):
         self.event(StartGame(self.players))
 
     def StartGame(self, players):
-        print ('start game')
         self.players = players
         self.state = GameState(players, self.startvalue)
         self.event(GameInitialized(self.state))
@@ -274,6 +248,7 @@ class DartGame(Component):
     def start_frame(self):
         print ("--> starting frame")
         self.state.state = 'playing'
+        self.state.advance_player()
         self.event(FrameStarted(self.state))
 
 
@@ -281,6 +256,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Start a dart game.')
     parser.add_argument('players', metavar='P', type=str, nargs='*',
                         help="player's names")
+
+    parser.add_argument('--init', default=301, type=int, 
+                        help="initial number of points")
     parser.add_argument('--snd', default='legacy',
                         help="sound system (none/legacy/espeak)")
     parser.add_argument('--dev', default='/dev/ttyUSB0', 
@@ -290,7 +268,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug', action='store_true', help="Enable debug output")
     args = parser.parse_args()
 
-    d = DartGame(args.players) + Webserver
+    d = DartGame(args.players, args.init) + Webserver
     d += Logger()
     if args.dev != 'none':
         d += DartInput(args.dev)
