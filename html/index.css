@@ -16,6 +16,10 @@ body {
     text-align: center;
 }
 
+#navtabs {
+    padding-top: 1em;
+}
+
 .connlost {
     background-color: #900;
     color: white;
@@ -51,4 +55,8 @@ body {
 .btn-dragdrop {
     cursor: -webkit-grab;
     margin: 3px;
+}
+
+.large-entry {
+    font-size: xx-large;
 }

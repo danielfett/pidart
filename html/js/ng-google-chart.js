@@ -172,7 +172,7 @@
                                     dataTable: dataTable,
                                     view: $scope.chart.view,
                                     options: $scope.chart.options,
-                                    containerId: $elm[0]
+                                    containerId: $elm[0].id
                                 };
 
                                 if ($scope.chartWrapper == null) {

@@ -62,17 +62,14 @@
 	    </div>
 	  </div>
 	</div>
-      </div>
-      <h1 ng-if="state.state == 'gameover'">
-	Final results:
-      </h1>
-      <div class="row fit-height-body-18" ng-class="{hold: state.state=='hold', play: state.state != 'hold'}" ng-if="state.state != 'gameover'">
+      </div>      
+      <div class="row col-md-12 fit-height-body-18" ng-class="{hold: state.state=='hold', play: state.state != 'hold'}" ng-if="state.state != 'gameover'">
 	<span ng-if="state.state=='hold'"><i class="fa fa-stop"></i> HOLD</span>
 	<span ng-if="state.state != 'hold'"><i class="fa fa-play"></i> PLAY</span>
       </div>
 
       <!-- Nav tabs -->
-      <ul class="nav nav-tabs" ng-if="state.state != 'gameover'">
+      <ul class="nav nav-tabs" id="navtabs">
 	<li><a href="#order" data-toggle="tab">Order</a></li>
 	<li><a href="#stats" data-toggle="tab">Dartenbank Score</a></li>
 	<li><a href="#newgame" data-toggle="tab">New Game</a></li>
@@ -81,6 +78,9 @@
       <!-- Tab panes -->
       <div class="tab-content">
 	<div class="tab-pane active" id="order">
+	  <h1 ng-if="state.state == 'gameover'">
+	    Final standings:
+	  </h1>
 	  <table class="table table-striped table-hover table-condensed">
 	    <thead>
 	      <tr>
@@ -94,15 +94,15 @@
 	      </tr>
 	    </thead>
 	    <tbody>
-	      <tr ng-repeat="p in state.ranking | orderBy:predicate" ng-class="{success: p.score == 0}">
+	      <tr ng-repeat="p in state.ranking | orderBy:predicate" ng-class="{success: p.score == 0, danger: p.name == state.currentPlayer}">
 		<td>
 		  <i class="fa fa-check-square" ng-if="p.score == 0"></i>
 		  <i class="fa fa-arrow-right" ng-if="p.name == state.currentPlayer"></i>
 		</td>
 		<td>{{p.rank + 1}}</td>
-		<td>{{p.name}}</td>
+		<td class="large-entry">{{p.name}}</td>
 		<td><span ng-repeat="d in p.last_frame.darts track by $index" class="dart">{{d}} </span><span ng-if="p.last_frame.text"> = </span><span class="darttext">{{p.last_frame.text}}</span> </td>
-		<td>{{p.score}}</td>
+		<td class="large-entry">{{p.score}}</td>
 		<td>{{p.frames}}</td>
 		<td><input type="checkbox" ng-model="p.skipped" ng-click="skipPlayer($index)"></td>
 	      </tr>
@@ -110,7 +110,7 @@
 	  </table>
 	</div>
 	<div class="tab-pane" id="stats">
-	  <div google-chart chart="chart" style="{{chart.cssStyle}}" on-ready="chartReady()">
+	  <div google-chart chart="chart" style="height: 500px; width: 100%;" on-ready="chartReady()" id="mychart">
 	  </div>
 	  <a href="#" id="refresh">refresh</a>
 	</div>

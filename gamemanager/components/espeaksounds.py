@@ -3,6 +3,7 @@
 from espeak import espeak
 from circuits import Component
 from time import sleep
+from namemapping import name_mapping
 
 class EspeakSounds(Component):
     def __init__(self):
@@ -16,7 +17,7 @@ class EspeakSounds(Component):
         self.say('Dart Stuck.')
 
     def ManualNextPlayer(self, *args):
-        self.say('Next player.')
+        self.say('Hold.')
 
     def Hit(self, state, code):
         sleep(0.25)
@@ -24,9 +25,9 @@ class EspeakSounds(Component):
             self.say('Bull\'s eye')
         elif code == 'D25':
             self.say('Inner Bull\'s eye')
-        elif code.startswith('T'):
-            self.say('Triple %s' % code[1:])
         elif code.startswith('D'):
+            self.say('Double %s' % code[1:])
+        elif code.startswith('T'):
             self.say('Triple %s' % code[1:])
         else:
             self.say(code[1:])
@@ -45,7 +46,8 @@ class EspeakSounds(Component):
         self.say('Press START')
 
     def FrameStarted(self, state):
-        self.say('Next player. Is. %s.' % ('.'.join(state.players[state.currentPlayer])))
+        name = name_mapping.get(state.currentPlayer.name, '.'.join(state.currentPlayer.name))
+        self.say('Next player. Is. %s.' % (name))
 
     def GameOver(self, *args):
         self.say('Game over')

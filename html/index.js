@@ -2,19 +2,19 @@
 
 function fitText() {
     var divisors = [4, 6, 12, 18];
-    if ($(window).height() < $(window).width()) {
+    //if ($(window).height() < $(window).width()) {
 	for (var d in divisors) {
 	    $( '.fit-height-body-' + divisors[d] ).each(function ( i, box ) {
 		$(box).css('font-size', $(window).height()/divisors[d]);
 	    });
 	}
-    } else {
+    //} else {
 	for (var d in divisors) {
 	    $( '.fit-width-body-' + divisors[d] ).each(function ( i, box ) {
 		$(box).css('font-size', $(window).height()/divisors[d]);
 	    });
 	}
-    }
+    //}
 }
 
 var eloEngine = new function(){
@@ -94,7 +94,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     var history = {};
     history.type="LineChart";
 //    history.displayed = false;
-    history.cssStyle = "height: 500px; width: 100%;";
+//    history.cssStyle = "";
     history.data = {};
     history.options = {
         "isStacked": "false",
@@ -105,7 +105,8 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
         },
         "hAxis": {
             "title": "Date"
-        }
+        },
+	containerId: "mychart"
     };
 
     $scope.chart = history;
@@ -193,6 +194,12 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	    sock.send("cmd:new-game " + players.join(','));
 	};
 
+	$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+	    if (e.target.hash == '#stats') {
+		$scope.$emit('resizeMsg');
+	    }
+	});
+
     });
 
     $scope.latestScores = {};
@@ -252,7 +259,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 		todaysRanking
 	    )
 	);
-	$scope.$apply();
+	//$scope.$apply();
     };
 
     $scope.getChartRowFromRatings = function(date, ratings) {

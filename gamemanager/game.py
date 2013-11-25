@@ -168,16 +168,19 @@ class DartGame(Component):
 
     def SkipPlayer(self, player):
         skipped = self.state.toggle_skip(self.state.players[player])
-        if skipped and self.state.state == 'playing' and self.state.currentPlayer.index == player and len(self.state.currentDarts) == 0:
-            self.finish_frame(hold=False, cancel=True)
+        if skipped:
+            if self.state.state == 'playing' and self.state.currentPlayer.index == player and len(self.state.currentDarts) == 0:
+                self.finish_frame(hold=False, cancel=True)                
+            elif self.state.state == 'hold_between_frames':
+                # we can safely repeat the preparation for the next
+                # player here, as it is idempotent. It cannot output
+                # None (for gameover) here, as then it would have done
+                # so already earlier.                
+                self.state.prepare_next_player()
 
     def ReceiveInput(self, source, value):
         print ("State is %s, input is %r from %r" % (self.state.state, value, source))
-        if self.state.state == 'hold_in_frame':
-            if source == 'code' and value in ['BSTART', 'BGAME']: 
-                self.event(LeaveHold(True))
-                self.start_frame()
-        elif self.state.state == 'hold_between_frames':
+        if self.state.state == 'hold_between_frames':
             if source == 'code' and value in ['BSTART', 'BGAME']  or \
                     source == 'generic' and value == 'next_player': 
                 self.event(LeaveHold(False))
@@ -189,7 +192,7 @@ class DartGame(Component):
             if source == 'code':
                 if value == 'XSTUCK':
                     self.event(DartStuck())
-                    print ("Dart is stuck, remove dart!")
+                    print ("Dart is stuckxb, remove dart!")
                 elif value == 'BGAME': #START':
                     self.event(ManualNextPlayer())
                      # hold only if there are darts sticking in the board
@@ -219,7 +222,7 @@ class DartGame(Component):
             
 
     def finish_frame(self, hold=False, cancel=False):
-        self.event(FrameFinished(self.state))
+        self.event(FrameFinished(deepcopy(self.state)))
         if not cancel:
             self.state.flush_frame()
         if self.state.prepare_next_player() == None:
