@@ -52,7 +52,7 @@
 	Connection lost. Please reload!
       </div>
 
-      <div class="row" ng-if="state.state != 'gameover'">
+      <div class="row" ng-if="state.state != 'gameover' && state.state != 'null'">
         <div class="col-md-4 col-xs-6 fit-height-body-4 fit-width-body-6" id="name">{{state.currentPlayer}}</div>
         <div class="col-md-4 col-xs-6 fit-height-body-4 fit-width-body-6" id="score">{{state.currentScore}}</div>
         <div class="col-xs-12 col-md-4">
@@ -63,21 +63,23 @@
 	  </div>
 	</div>
       </div>      
-      <div class="row col-md-12 fit-height-body-18" ng-class="{hold: state.state=='hold', play: state.state != 'hold'}" ng-if="state.state != 'gameover'">
-	<span ng-if="state.state=='hold'"><i class="fa fa-stop"></i> HOLD</span>
-	<span ng-if="state.state != 'hold'"><i class="fa fa-play"></i> PLAY</span>
+      <div class="row col-md-12 fit-height-body-18 hold" ng-if="state.state=='hold'">
+	<i class="fa fa-stop"></i> HOLD
+      </div>
+      <div class="row col-md-12 fit-height-body-18 play" ng-if="state.state=='playing'">
+	<i class="fa fa-play"></i> PLAY
       </div>
 
       <!-- Nav tabs -->
       <ul class="nav nav-tabs" id="navtabs">
-	<li><a href="#order" data-toggle="tab">Order</a></li>
-	<li><a href="#stats" data-toggle="tab">Dartenbank Score</a></li>
+	<li><a href="#order" data-toggle="tab" ng-if="state.ranking.length > 0">Order</a></li>
+	<li><a href="#stats" data-toggle="tab" ng-if="state.ranking.length > 0">Dartenbank Score</a></li>
 	<li><a href="#newgame" data-toggle="tab">New Game</a></li>
       </ul>
 
       <!-- Tab panes -->
       <div class="tab-content">
-	<div class="tab-pane active" id="order">
+	<div class="tab-pane active" id="order" ng-if="state.ranking.length > 0">
 	  <h1 ng-if="state.state == 'gameover'">
 	    Final standings:
 	  </h1>
@@ -109,7 +111,7 @@
 	    </tbody>
 	  </table>
 	</div>
-	<div class="tab-pane" id="stats">
+	<div class="tab-pane" id="stats" ng-if="state.ranking.length > 0">
 	  <div google-chart chart="chart" style="height: 500px; width: 100%;" on-ready="chartReady()" id="mychart">
 	  </div>
 	  <a href="#" id="refresh">refresh</a>
@@ -146,8 +148,14 @@
 	    </div>
 	  </div>	
 	  
-	  <div class="col-md-2 col-md-offset-10">
-	    <input class="btn btn-primary" type="submit" value="start new game" style="margin-top: 1em;" ng-click="newGame()">
+	  <div class="row form-group">
+	    <div class="col-md-4 col-md-offset-6">
+	      <label for="initialValue">Initial points:</label>
+	      <input class="form-control" type="number" value="301" min="1" max="1001" id="initialValue" ng-model="initialValue">
+	    </div>
+	    <div class="col-md-2" style="valign: bottom">
+	      <input class="btn btn-primary" type="submit" value="start new game" style="margin-top: 1.75em;" ng-click="newGame()">
+	    </div>
 	  </div>
 	</div>
       </div>

@@ -18,7 +18,11 @@ class DartsServer(Component):
 
     def __init__(self):
         Component.__init__(self)
-        self.connectMessage = {'state': 'normal'}
+        self.connectMessage = {
+            'state': 'null', 
+            'players': [], 
+            'ranking': []
+            }
         self.knownSockets = []
 
     def read(self, sock, data):
@@ -27,12 +31,12 @@ class DartsServer(Component):
             self.fireEvent(write(sock, msg_json))
             self.knownSockets.append(sock)
         elif data.startswith('cmd:'):
-            cmd, params = data.split(' ')
-            if cmd == 'cmd:skip-player':
-                self.fireEvent(SkipPlayer(int(params)))
-            if cmd == 'cmd:new-game':
-                players = params.split(',')
-                self.fireEvent(StartGame(players));
+            pars = data.split(' ')
+            if pars[0] == 'cmd:skip-player':
+                self.fireEvent(SkipPlayer(int(pars[1])))
+            if pars[0] == 'cmd:new-game':
+                players = pars[1].split(',')
+                self.fireEvent(StartGame(players, int(pars[2])));
 
     @handler('SendState')
     def SendState(self, msg):
@@ -62,14 +66,12 @@ class DartsServerController(Component):
         self.fire(SendState(self.serialize_full(state)))
 
     @handler('Hit', 'HitBust', 'HitWinner')
-    def _send_short_state(self, state, code):
+    def _send_short_state(self, state, *args):
         self.fire(SendState(self.serialize_short(state)))
 
-    def EnterHold(self, manual):
-        self.fire(SendState({'state': 'hold'}))
-
-    def LeaveHold(self, manual):
-        self.fire(SendState({'state': 'normal'}))
+    @handler('EnterHold', 'LeaveHold')
+    def _send_only_state(self, state, *args):
+        self.fire(SendState({'state': state.state}))
 
 
 class Root(Controller):

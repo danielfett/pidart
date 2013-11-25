@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 from time import sleep
+from datetime import datetime
+from platform import node
 from sys import exit
 from operator import methodcaller, itemgetter
 from copy import deepcopy
@@ -66,16 +68,19 @@ class Player(object):
         
 
 class GameState(object):
-    def __init__(self, players, startvalue):
+    def __init__(self, players, startvalue, gameid):
         self.state = None
         self.players = []
+        self.startvalue = startvalue
         for i in range(len(players)):
             self.players.append(Player(players[i], i, startvalue))
 
-        self.nextPlayer = self.players[0] # fails if zero players
+        if len(self.players):
+            self.nextPlayer = self.players[0] # fails if zero players
         self.currentDarts = []
         self.currentScore = 0
         self._update_ranks()
+        self.id = gameid
 
     def add_dart(self, dart, s):
         self.currentDarts.append(dart)
@@ -144,10 +149,23 @@ class GameState(object):
 class DartGame(Component):
     NUMBEROFDARTS = 3
 
-    def __init__(self, players = None, startvalue = 301):
-        super(DartGame, self).__init__()
-        self.startvalue = startvalue
-        self.players = players
+    def started(self, x):
+        # set the initial state to a default state
+        self.state = GameState([], 0, None)
+        
+    def StartGame(self, players, startvalue):
+        # generate a more or less unique id for this game
+        date = datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
+        gameid = "%s--%s" % (node(), date)
+        self.state = GameState(players, startvalue, gameid)
+        self.fire(GameInitialized(self.state))
+        self.start_frame()
+
+    def start_frame(self):
+        print ("--> starting frame")
+        self.state.state = 'playing'
+        self.state.advance_player()
+        self.fire(FrameStarted(self.state))
 
     @staticmethod
     def score2sum(score):
@@ -162,16 +180,12 @@ class DartGame(Component):
         score = score[1:]
         return multiplier * int(score)
 
-    def event(self, event):
-        self.fire(event)
-        #self.flush()        
-
     def SkipPlayer(self, player):
         skipped = self.state.toggle_skip(self.state.players[player])
         if skipped:
             if self.state.state == 'playing' and self.state.currentPlayer.index == player and len(self.state.currentDarts) == 0:
                 self.finish_frame(hold=False, cancel=True)                
-            elif self.state.state == 'hold_between_frames':
+            elif self.state.state == 'hold':
                 # we can safely repeat the preparation for the next
                 # player here, as it is idempotent. It cannot output
                 # None (for gameover) here, as then it would have done
@@ -180,10 +194,10 @@ class DartGame(Component):
 
     def ReceiveInput(self, source, value):
         print ("State is %s, input is %r from %r" % (self.state.state, value, source))
-        if self.state.state == 'hold_between_frames':
+        if self.state.state == 'hold':
             if source == 'code' and value in ['BSTART', 'BGAME']  or \
                     source == 'generic' and value == 'next_player': 
-                self.event(LeaveHold(False))
+                self.fire(LeaveHold(self.state, False))
                 self.start_frame()
         elif self.state.state == 'playing': 
             if source == 'generic':
@@ -191,29 +205,29 @@ class DartGame(Component):
                     self.finish_frame(hold=False)
             if source == 'code':
                 if value == 'XSTUCK':
-                    self.event(DartStuck())
+                    self.fire(DartStuck())
                     print ("Dart is stuckxb, remove dart!")
                 elif value == 'BGAME': #START':
-                    self.event(ManualNextPlayer())
+                    self.fire(ManualNextPlayer())
                      # hold only if there are darts sticking in the board
                     self.finish_frame(hold=len(self.state.currentDarts) > 0)
                 elif value.startswith('X') or value.startswith('B'):
-                    self.event(CodeNotImplemented())
+                    self.fire(CodeNotImplemented())
                     print ("Not implemented: %s" % value)
                 elif value.startswith('S') or value.startswith('D') or value.startswith('T'):
                     print ("* %s hit %s" % (self.state.currentPlayer.name, value))
                     s = self.score2sum(value)
                     res = self.state.add_dart(value, s)
                     if res == Player.BUST:
-                        self.event(HitBust(self.state, value))
+                        self.fire(HitBust(deepcopy(self.state), value))
                         print ("** BUST!")
                         self.finish_frame(hold=True)
                     elif res == Player.CHECKOUT:
-                        self.event(HitWinner(self.state, value))
+                        self.fire(HitWinner(deepcopy(self.state), value))
                         print ("** WINNER!")
                         self.finish_frame(hold=True)
                     else:
-                        self.event(Hit(self.state, value))
+                        self.fire(Hit(deepcopy(self.state), value))
                         if len(self.state.currentDarts) == self.NUMBEROFDARTS:
                             self.finish_frame(hold=True)
         elif self.state.state == 'gameover':
@@ -222,45 +236,29 @@ class DartGame(Component):
             
 
     def finish_frame(self, hold=False, cancel=False):
-        self.event(FrameFinished(deepcopy(self.state)))
+        self.fire(FrameFinished(deepcopy(self.state)))
         if not cancel:
             self.state.flush_frame()
         if self.state.prepare_next_player() == None:
             self.gameover()
         elif hold:
-            self.event(EnterHold(False))
-            self.state.state = 'hold_between_frames'
+            self.state.state = 'hold'
+            self.fire(EnterHold(self.state, False))
         else:
             self.start_frame()
 
     def gameover(self):
         self.state.state = 'gameover'
-        self.event(GameOver(self.state))
+        self.fire(GameOver(self.state))
         print ("--> Game is over! Ranking:")
         for w in self.state.player_list(sortby='rank'):
             print ("%d: %s" % (w['rank'] + 1, w['name']))
-        
-    def started(self, x):
-        self.event(StartGame(self.players))
-
-    def StartGame(self, players):
-        self.players = players
-        self.state = GameState(players, self.startvalue)
-        self.event(GameInitialized(self.state))
-        self.start_frame()
-
-    def start_frame(self):
-        print ("--> starting frame")
-        self.state.state = 'playing'
-        self.state.advance_player()
-        self.event(FrameStarted(self.state))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Start a dart game.')
     parser.add_argument('players', metavar='P', type=str, nargs='*',
                         help="player's names")
-
     parser.add_argument('--init', default=301, type=int, 
                         help="initial number of points")
     parser.add_argument('--snd', default='legacy',
@@ -268,11 +266,11 @@ if __name__ == "__main__":
     parser.add_argument('--dev', default='/dev/ttyUSB0', 
                         help="input USB device (use none for no USB input)")
     parser.add_argument('--file', help="Read input from this file.")
-
     parser.add_argument('--debug', action='store_true', help="Enable debug output")
+    parser.add_argument('--nolog', action='store_true', help="Disable single-dart logging")
     args = parser.parse_args()
 
-    d = DartGame(args.players, args.init) + Webserver
+    d = DartGame() + Webserver
     d += Logger()
     if args.dev != 'none':
         d += DartInput(args.dev)
@@ -286,6 +284,10 @@ if __name__ == "__main__":
     elif args.snd == 'espeak':
         from components.espeaksounds import EspeakSounds
         d += EspeakSounds()
-
+    if not args.nolog:
+        from components.logger import DetailedLogger
+        d += DetailedLogger()
+    if len(args.players):
+        d.fire(StartGame(args.players, args.init))
     d.run()
     

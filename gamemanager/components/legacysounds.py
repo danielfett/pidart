@@ -51,11 +51,11 @@ class LegacySounds(Component):
         if len(state.winners()) == 1:
             self.play('winner')
 
-    def EnterHold(self, manual):
+    def EnterHold(self, state, manual):
         if manual:
             self.play('beep')
 
-    def LeaveHold(self, manual):
+    def LeaveHold(self, state, manual):
         if manual:
             self.play('beep')
 

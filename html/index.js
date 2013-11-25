@@ -90,6 +90,12 @@ $(document).ready(function() {
 
 angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', function ($scope, $timeout, $filter) {
     $scope.state = {};
+    $scope.availablePlayers = [];
+    $scope.selectedPlayers = [];
+    $scope.latestScores = {};
+    $scope.usualSuspects = ['DF', 'ES', 'GS', 'OC', 'RK', 'TT'];
+    $scope.playersInChart = [];
+    $scope.initialValue = 301;
 
     var history = {};
     history.type="LineChart";
@@ -111,101 +117,77 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 
     $scope.chart = history;
 
-    $scope.chartReady = function () {
+    /*$scope.chartReady = function () {
         fixGoogleChartsBarsBootstrap();
     }
 
     function fixGoogleChartsBarsBootstrap() {
-        // Google charts uses <img height="12px">, which is incompatible with Twitter
-        // * bootstrap in responsive mode, which inserts a css rule for: img { height: auto; }.
-        // *
-        // * The fix is to use inline style width attributes, ie <img style="height: 12px;">.
-        // * BUT we can't change the way Google Charts renders its bars. Nor can we change
-        // * the Twitter bootstrap CSS and remain future proof.
-        // *
-        // * Instead, this function can be called after a Google charts render to "fix" the
-        // * issue by setting the style attributes dynamically.
-
         $(".google-visualization-table-table img[width]").each(function (index, img) {
             $(img).css("width", $(img).attr("width")).css("height", $(img).attr("height"));
         });
-    };
+    };*/
+
+    var wsuri = window.location.href.replace(/^http(s?:\/\/.*):\d+\/.*$/, 'ws$1:8080/websocket');
+    $scope.sock = new ReconnectingWebSocket(wsuri);
 
     $(document).ready(function() {
-	var wsuri = window.location.href.replace(/^http(s?:\/\/.*):\d+\/.*$/, 'ws$1:8080/websocket');
-	if ("WebSocket" in window) {
-	    sock = new ReconnectingWebSocket(wsuri);
-	} else {
-	    console.error("Browser does not support WebSocket!");
-	    return;
-	}
-
-	sock.onopen = function() {
-	    console.log("Connected to " + wsuri);
-	    sock.send("hello");
-	}
-
-	sock.onclose = function(e) {
-	    console.log("Connection closed (wasClean = " + e.wasClean + ", code = " + e.code + ", reason = '" + e.reason + "')");
-	    if ($scope.state.state != 'gameover') {
-		$scope.state.state = 'connlost';
-	    }
-	    $scope.$apply();
-	    fitText();
-	}
-
-	sock.onmessage = function(e) {
-	    console.log("Got message: " + e.data);
-	    var oldPlayers = typeof($scope.state.players) === 'undefined' ? null : $scope.state.players.join();
-	    var newState = JSON.parse(e.data);
-	    var newPlayers = typeof(newState.players) === 'undefined' ? null : newState.players.join();
-	    $scope.state = $.extend($scope.state, newState);
-	    if (oldPlayers != newPlayers) {
-		$scope.updateChartFull();
-	    } else if (typeof(newState.ranking) !== 'undefined') {
-		$scope.updateChartRanking(true);
-	    }
-	    $scope.$apply();
-	    fitText();
-	}
-
-	$scope.skipPlayer = function(player) {
-	    sock.send("cmd:skip-player " + player);
-	}
-	
-
-	$scope.newGame = function() {
-	    if ($scope.selectedPlayers.length < 2) {
-		alert("Please select at least two players.");
-		return;
-	    }
-	    if ($scope.state.state != 'gameover') {
-		if (! confirm("Do you want to cancel the current game?")) {
-		    return;
-		}
-	    }
-	    $scope.selectedPlayers.sort(function (a, b) {
-		return ((a.rank < b.rank) ? -1 : ((a.rank > b.rank) ? 1 : 0));
-	    });
-	    var players = [];
-	    for (var i = 0; i < $scope.selectedPlayers.length; i ++) {
-		players.push($scope.selectedPlayers[i].name);
-	    }
-	    sock.send("cmd:new-game " + players.join(','));
-	};
-
 	$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 	    if (e.target.hash == '#stats') {
 		$scope.$emit('resizeMsg');
 	    }
 	});
-
     });
 
-    $scope.latestScores = {};
+    $scope.sock.onopen = function() {
+	console.log("Connected to " + wsuri);
+	$scope.sock.send("hello");
+    }
 
-    $scope.usualSuspects = ['DF', 'ES', 'GS', 'OC', 'RK', 'TT'];
-    $scope.playersInChart = [];
+    $scope.sock.onclose = function(e) {
+	console.log("Connection closed (wasClean = " + e.wasClean + ", code = " + e.code + ", reason = '" + e.reason + "')");
+	$scope.state.state = 'connlost';
+	$scope.$apply();
+	fitText();
+    }
+
+    $scope.sock.onmessage = function(e) {
+	console.log("Got message: " + e.data);
+	var newState = JSON.parse(e.data);
+	var oldPlayers = typeof($scope.state.players) === 'undefined' ? null : $scope.state.players.join();
+	var newPlayers = typeof(newState.players) === 'undefined' ? null : newState.players.join();
+	$scope.state = $.extend($scope.state, newState);
+	if (oldPlayers != newPlayers || newState.state == 'null') {
+	    $scope.updateChartFull();
+	} else if (typeof(newState.ranking) !== 'undefined') {
+	    $scope.updateChartRanking(true);
+	}
+	$scope.$apply();
+	fitText();
+    }
+
+    $scope.skipPlayer = function(player) {
+	$scope.sock.send("cmd:skip-player " + player);
+    }
+	
+    $scope.newGame = function() {
+	if ($scope.selectedPlayers.length < 2) {
+	    alert("Please select at least two players.");
+	    return;
+	}
+	if ($scope.state.state != 'gameover' && $scope.state.state != 'null') {
+	    if (! confirm("Do you want to cancel the current game?")) {
+		return;
+	    }
+	}
+	$scope.selectedPlayers.sort(function (a, b) {
+	    return ((a.rank < b.rank) ? -1 : ((a.rank > b.rank) ? 1 : 0));
+	});
+	var players = [];
+	for (var i = 0; i < $scope.selectedPlayers.length; i ++) {
+	    players.push($scope.selectedPlayers[i].name);
+	}
+	$scope.sock.send("cmd:new-game " + players.join(',') + " " + $scope.initialValue);
+    };
 
     $scope.updateChartFull = function() {
 	$.ajax('http://infsec.uni-trier.de/dartenbank/rpc/elo.php?count=30', {
@@ -279,8 +261,6 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	$scope.updateChartFull();
     });
 
-    $scope.availablePlayers = [];
-    $scope.selectedPlayers = [];
     $scope.sortSelectedPlayers = function() {
 	return $filter('orderBy')($scope.selectedPlayers, '-games');
     };
