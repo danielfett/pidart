@@ -152,15 +152,37 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 
     $scope.sock.onmessage = function(e) {
 	console.log("Got message: " + e.data);
+	function get(a, b) {
+	    if (typeof(a) === 'undefined') {
+		return b;
+	    }
+	    return a;
+	}
 	var newState = JSON.parse(e.data);
-	var oldPlayers = typeof($scope.state.players) === 'undefined' ? null : $scope.state.players.join();
-	var newPlayers = typeof(newState.players) === 'undefined' ? null : newState.players.join();
+	var oldPlayers = get($scope.state.players, []).join();
+	var newPlayers = get(newState.players, []).join();
+	var oldStateState = get($scope.state.state, '');
+	var newStateState = get(newState.state.state, '');
+
 	$scope.state = $.extend($scope.state, newState);
-	if (oldPlayers != newPlayers || newState.state == 'null') {
+
+	if (oldPlayers != newPlayers) {
 	    $scope.updateChartFull();
 	} else if (typeof(newState.ranking) !== 'undefined') {
 	    $scope.updateChartRanking(true);
 	}
+
+	if (newStateState != oldStateState) {
+	    if (newStateState == 'null') {
+		$scope.updateChartFull();
+		$('a[href="#newgame"]').trigger('click');
+	    }
+	    if (newStateState == 'playing' && oldStateState != 'hold') {
+		console.debug("Oldstate was " + oldStateState);
+		$('a[href="#order"]').trigger('click');
+	    }
+	}
+		
 	$scope.$apply();
 	fitText();
     }

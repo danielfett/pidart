@@ -72,14 +72,14 @@
 
       <!-- Nav tabs -->
       <ul class="nav nav-tabs" id="navtabs">
-	<li><a href="#order" data-toggle="tab" ng-if="state.ranking.length > 0">Order</a></li>
-	<li><a href="#stats" data-toggle="tab" ng-if="state.ranking.length > 0">Dartenbank Score</a></li>
+	<li><a href="#order" data-toggle="tab">Order</a></li>
+	<li><a href="#stats" data-toggle="tab">Dartenbank Score</a></li>
 	<li><a href="#newgame" data-toggle="tab">New Game</a></li>
       </ul>
 
       <!-- Tab panes -->
       <div class="tab-content">
-	<div class="tab-pane active" id="order" ng-if="state.ranking.length > 0">
+	<div class="tab-pane active" id="order">
 	  <h1 ng-if="state.state == 'gameover'">
 	    Final standings:
 	  </h1>
@@ -111,7 +111,7 @@
 	    </tbody>
 	  </table>
 	</div>
-	<div class="tab-pane" id="stats" ng-if="state.ranking.length > 0">
+	<div class="tab-pane" id="stats">
 	  <div google-chart chart="chart" style="height: 500px; width: 100%;" on-ready="chartReady()" id="mychart">
 	  </div>
 	  <a href="#" id="refresh">refresh</a>
