@@ -284,7 +284,11 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     });
 
     $scope.sortSelectedPlayers = function() {
-	return $filter('orderBy')($scope.selectedPlayers, '-games');
+	return $filter('orderBy')($scope.selectedPlayers, 'rank');
+    };
+
+    $scope.sortAvailablePlayers = function() {
+	return $filter('orderBy')($scope.availablePlayers, '-games');
     };
 
     $scope.updateAvailablePlayers = function() {

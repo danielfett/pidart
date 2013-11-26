@@ -131,8 +131,8 @@
 		  <input class="btn btn-primary" type="submit" value="add" style="margin-top: 1em;" ng-click="addPlayer()">
 		</div>
 	      </div>
-	      <div class="dropfrom" data-drop="true" ng-model="availablePlayers" jqyoui-droppable="{multiple:true}">
-		<div class="btn btn-info btn-dragdrop" ng-repeat="p in availablePlayers | orderBy:p.rank" ng-show="p.name" ng-model="availablePlayers" data-drag="true" data-jqyoui-options="{revert: 'invalid'}" jqyoui-draggable="{index: {{$index}}}">
+	      <div class="dropfrom" data-drop="true" ng-model="availablePlayers" jqyoui-droppable="{multiple:true, applyFilter: 'sortAvailablePlayers'}">
+		<div class="btn btn-info btn-dragdrop" ng-repeat="p in availablePlayers | orderBy:-p.games" ng-show="p.name" ng-model="availablePlayers" data-drag="true" data-jqyoui-options="{revert: 'invalid'}" jqyoui-draggable="{index: {{$index}}, applyFilter: 'sortAvailablePlayers'}">
 		  {{p.name}}
 		</div>
 	      </div>
