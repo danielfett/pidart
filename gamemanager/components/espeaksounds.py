@@ -30,13 +30,15 @@ class EspeakSounds(Component):
         elif code.startswith('T'):
             self.say('Triple %s' % code[1:])
         else:
+            if code.endswith('i'):
+                code = code[:-1]
             self.say(code[1:])
 
     def HitBust(self, *args):
         self.say('Bust')
 
     def HitWinner(self, state, code):
-        if len(state.winners()) == 1:
+        if len(state.winners()) == 0:
             self.say('Checked out! You are the winner')
         else:
             self.say('Checked out! You are number %d' % (len(state.winners())))

@@ -177,6 +177,8 @@ class DartGame(Component):
             multiplier = 3
         else:
             raise Exception("Unknown input: %s" % score)
+        if score.endswith('i'):
+            score = score[:-1]
         score = score[1:]
         return multiplier * int(score)
 

@@ -34,6 +34,8 @@ class DetailedLogger(Component):
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS throws (games_id TEXT, player TEXT, frame TEXT, dart TEXT, code TEXT, before INT, timestamp DATETIME)''')
         self.cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS index_throws ON throws (games_id, player, frame, dart)''')
         self.cursor.execute('''CREATE INDEX IF NOT EXISTS index_results ON throws (player, before)''')
+        self.cursor.execute('''PRAGMA synchronous = OFF''')
+        self.cursor.execute('''PRAGMA journal_mode = MEMORY''')
         self.conn.commit()
     
     def GameInitialized(self, state):
@@ -44,6 +46,7 @@ class DetailedLogger(Component):
         self.cursor.execute('INSERT INTO games (id, startvalue, date) VALUES (?, ?, CURRENT_TIMESTAMP)', args)
         self.conn.commit()
 
+    @handler('Hit', priority=-1)
     def Hit(self, state, code):
         args = (
             state.id,
@@ -55,4 +58,6 @@ class DetailedLogger(Component):
             )
         print "%r %r %r %r %r %r" % args
         self.cursor.execute('INSERT INTO throws (games_id, player, frame, dart, code, before, timestamp) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)', args)
+
+    def FrameFinished(self, state):
         self.conn.commit()

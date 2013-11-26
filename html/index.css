@@ -60,3 +60,23 @@ body {
 .large-entry {
     font-size: xx-large;
 }
+/*
+.dart.double {
+    border-bottom: 1px solid black;
+}
+
+.dart.triple {
+    border-bottom: 3px double black;
+}*/
+
+.dart.double:before {
+    content:":";
+}
+
+.dart.triple:before {
+    content:"⋮";
+}
+
+.dart.single:before {
+    content:".";
+}
