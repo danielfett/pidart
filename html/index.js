@@ -117,16 +117,6 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 
     $scope.chart = history;
 
-    /*$scope.chartReady = function () {
-        fixGoogleChartsBarsBootstrap();
-    }
-
-    function fixGoogleChartsBarsBootstrap() {
-        $(".google-visualization-table-table img[width]").each(function (index, img) {
-            $(img).css("width", $(img).attr("width")).css("height", $(img).attr("height"));
-        });
-    };*/
-
     var wsuri = window.location.href.replace(/^http(s?:\/\/.*):\d+\/.*$/, 'ws$1:8080/websocket');
     $scope.sock = new ReconnectingWebSocket(wsuri);
 
@@ -136,6 +126,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 		$scope.$emit('resizeMsg');
 	    }
 	});
+	$scope.updateChartFull();
     });
 
     $scope.sock.onopen = function() {
@@ -278,10 +269,6 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	return {c: currentRow};
     };
 
-
-    $('#refresh').click(function() {
-	$scope.updateChartFull();
-    });
 
     $scope.sortAvailablePlayers = function() {
 	$scope.availablePlayers = $filter('orderBy')($scope.availablePlayers, ['-games', '-rank']);
