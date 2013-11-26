@@ -1,6 +1,6 @@
 """ LOGGING """
 
-from circuits import Component
+from circuits import Component, handler
 from datetime import datetime
 
 class Logger(Component):

@@ -75,8 +75,13 @@ body {
 
 .dart.triple:before {
     content:"⋮";
+    margin-right: -0.7ex;
+}
+
+.dart.triple {
+    margin-left: -0.7ex;
 }
 
 .dart.single:before {
-    content:".";
+    content:"·";
 }

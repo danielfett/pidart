@@ -313,17 +313,20 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     };
 
     $scope.formatDart = function(d) {
+	l = d.length-1;
+	if (d.substr(d.length-1, 1) == 'i') {
+	    l -= 1;
+	}
+	d = d.substr(1, l);
+	return d;
+    };
+    $scope.formatDartClass = function(d) {
 	var mult = 'single';
-	var length = d.length - 1;
 	if (d.substring(0, 1) == 'D') {
 	    mult = 'double';
 	} else if (d.substring(0, 1) == 'T') {
 	    mult = 'triple';
-	} 
-	if (d.substring(d.length - 1, 1) == 'i') {
-	    length = d.length - 2;
-	}
-	d = d.substring(1, length);
-	return "<span class='dart " + mult + "'>" + d + "</span>";
-    };
+	} 	
+	return 'dart ' + mult;
+    }
 });

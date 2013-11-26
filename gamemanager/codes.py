@@ -1,4 +1,4 @@
-fclist = """26	S1
+fclist = """106	S1
 70	D1
 10	T1
 69	S2
@@ -60,7 +60,7 @@ fclist = """26	S1
 9	T20
 6	S25
 4	D25
-106	S1i
+26	S1i
 5	S2i
 99	S3i
 11	S4i
