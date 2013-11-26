@@ -283,12 +283,13 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	$scope.updateChartFull();
     });
 
-    $scope.sortSelectedPlayers = function() {
-	return $filter('orderBy')($scope.selectedPlayers, 'rank');
+    $scope.sortAvailablePlayers = function() {
+	$scope.availablePlayers = $filter('orderBy')($scope.availablePlayers, ['-games', '-rank']);
     };
 
-    $scope.sortAvailablePlayers = function() {
-	return $filter('orderBy')($scope.availablePlayers, '-games');
+    $scope.sortSelectedPlayers = function() {
+	$scope.selectedPlayers =  $filter('orderBy')($scope.selectedPlayers, ['rank', 'name']);
+	$scope.$apply();
     };
 
     $scope.updateAvailablePlayers = function() {
@@ -304,6 +305,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 		    }
 		    $scope.availablePlayers.push({name: name, games: games, rank:rank});
 		});
+		$scope.sortAvailablePlayers();
 	    });
     };
 
@@ -312,12 +314,16 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	    alert("Player name must have 2 or 3 characters.");
 	    return;
 	}
+	var cont = true;
 	$.each($scope.availablePlayers, function(i, data) {
 	    if (data.name == $scope.newPlayerName) {
 		alert("Player name already exists.");
-		return;
+		cont = false;
 	    }
 	});
-	$scope.availablePlayers.push({name: $scope.newPlayerName, games: 0, rank:0});
+	if (cont) {
+	    $scope.availablePlayers.push({name: $scope.newPlayerName, games: 0, rank:0});
+	}
+	$scope.newPlayerName = undefined;
     };
 });

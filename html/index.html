@@ -131,8 +131,8 @@
 		  <input class="btn btn-primary" type="submit" value="add" style="margin-top: 1em;" ng-click="addPlayer()">
 		</div>
 	      </div>
-	      <div class="dropfrom" data-drop="true" ng-model="availablePlayers" jqyoui-droppable="{multiple:true, applyFilter: 'sortAvailablePlayers'}">
-		<div class="btn btn-info btn-dragdrop" ng-repeat="p in availablePlayers | orderBy:-p.games" ng-show="p.name" ng-model="availablePlayers" data-drag="true" data-jqyoui-options="{revert: 'invalid'}" jqyoui-draggable="{index: {{$index}}, applyFilter: 'sortAvailablePlayers'}">
+	      <div class="dropfrom" data-drop="true" ng-model="availablePlayers" jqyoui-droppable="{multiple:true, onDrop: 'sortAvailablePlayers'}">
+		<div class="btn btn-info btn-dragdrop" ng-repeat="p in availablePlayers | orderBy:['-games', '-rank']" ng-model="availablePlayers" data-drag="true" data-jqyoui-options="{revert: 'invalid'}" jqyoui-draggable="{index: {{$index}}}">
 		  {{p.name}}
 		</div>
 	      </div>
@@ -140,9 +140,9 @@
 	    <div class="col-md-6">
 	      <h2>Selected Players</h2>
 	      
-	      <div class="dropto" data-drop="true" ng-model="selectedPlayers" jqyoui-droppable="{multiple:true, applyFilter: 'sortSelectedPlayers'}">
-		<div class="btn btn-info btn-dragdrop" ng-repeat="p in selectedPlayers | orderBy:'rank'" data-drag="true" ng-model="selectedPlayers" data-jqyoui-options="{revert: 'invalid'}" jqyoui-draggable="{index: {{$index}}, applyFilter: 'sortSelectedPlayers'}">
-		  {{p.name}} ({{p.rank | number:0}})
+	      <div class="dropto" data-drop="true" ng-model="selectedPlayers" jqyoui-droppable="{multiple:true, onDrop: 'sortSelectedPlayers'}">
+		<div class="btn btn-info btn-dragdrop" ng-repeat="p in selectedPlayers | orderBy:['rank', 'name']" data-drag="true" ng-model="selectedPlayers" data-jqyoui-options="{revert: 'invalid'}" jqyoui-draggable="{index: {{$index}}}">
+		  {{p.name}} (<span ng-if="p.rank > 0">{{p.rank | number:0}}</span><span ng-if="p.rank == 0">new</span>)
 		</div>
 	      </div>
 	    </div>
