@@ -201,12 +201,12 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 		return;
 	    }
 	}
-	$scope.selectedPlayers.sort(function (a, b) {
-	    return ((a.rank < b.rank) ? -1 : ((a.rank > b.rank) ? 1 : 0));
-	});
 	var players = [];
 	for (var i = 0; i < $scope.selectedPlayers.length; i ++) {
 	    players.push($scope.selectedPlayers[i].name);
+	}
+	if (! confirm("Is this order correct?\n" + players.join(', '))) {
+	    return;
 	}
 	$scope.sock.send("cmd:new-game " + players.join(',') + " " + $scope.initialValue);
     };
