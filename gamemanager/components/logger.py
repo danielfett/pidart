@@ -43,6 +43,7 @@ class DetailedLogger(Component):
             state.id,
             state.startvalue
             )
+        print "%r" % (args,)
         self.cursor.execute('INSERT INTO games (id, startvalue, date) VALUES (?, ?, CURRENT_TIMESTAMP)', args)
         self.conn.commit()
 

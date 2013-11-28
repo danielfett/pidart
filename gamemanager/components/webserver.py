@@ -8,7 +8,7 @@ from circuits.net.sockets import write, connect
  
 import simplejson
 
-from events import ReceiveInput, SkipPlayer, StartGame
+from events import ReceiveInput, SkipPlayer, StartGame, ChangeLastRound
 
 class SendState(Event):
     pass
@@ -25,18 +25,43 @@ class DartsServer(Component):
             }
         self.knownSockets = []
 
+    @staticmethod
+    def sanitize_input_dart(dart):
+        try:
+            dart = dart.upper()
+            # the following fails if len(dart) == 0:
+            if (dart[0] not in ['S', 'D', 'T']):
+                dart = 'S%s' % dart
+            # fails if dart not numeric:
+            if 1 <= int(dart[1:]) <= 20:
+                raise ValueError()
+        except (ValueError, IndexError), e:
+            raise ValueError()
+        return dart
+            
+
     def read(self, sock, data):
         if data == 'hello':
             msg_json = simplejson.dumps(self.connectMessage)
             self.fireEvent(write(sock, msg_json))
             self.knownSockets.append(sock)
         elif data.startswith('cmd:'):
-            pars = data.split(' ')
-            if pars[0] == 'cmd:skip-player':
-                self.fireEvent(SkipPlayer(int(pars[1])))
-            if pars[0] == 'cmd:new-game':
-                players = pars[1].split(',')
-                self.fireEvent(StartGame(players, int(pars[2])));
+            try:
+                pars = data.split(' ')
+                if pars[0] == 'cmd:skip-player':
+                    self.fireEvent(SkipPlayer(int(pars[1])))
+                elif pars[0] == 'cmd:new-game':
+                    players = pars[1].split(',')
+                    self.fireEvent(StartGame(players, int(pars[2])));
+                elif pars[0] == 'cmd:change-last-round':
+                    player = int(pars[1])
+                    oldDarts = map(sanitize_input_dart, pars[2].split(','))
+                    newDarts = map(sanitize_input_dart, pars[3].split(','))
+                    self.fireEvent(ChangeLastRound(player, oldDarts, newDarts))
+            except Exception, e:
+                print "Exception when parsing command '%s':" % data
+                print e
+                
 
     @handler('SendState')
     def SendState(self, msg):
@@ -61,7 +86,7 @@ class DartsServerController(Component):
         a['ranking'] = state.player_list(sortby = 'started')
         return a
 
-    @handler('GameInitialized', 'FrameFinished', 'FrameStarted', 'GameOver')
+    @handler('GameInitialized', 'FrameFinished', 'FrameStarted', 'GameOver', 'GameStateChanged')
     def _send_full_state(self, state):
         self.fire(SendState(self.serialize_full(state)))
 

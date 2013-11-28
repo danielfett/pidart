@@ -1,9 +1,11 @@
-from circuits import Component
-from events import ReceiveInput
-from circuits.io.serial import Serial
-from circuits.io.file import File
+from circuits import Component, Timer, Event
+from events import ReceiveInput, StartGame
+from circuits.io import Serial, File, Process
 from codes import FIELDCODES
 
+
+class FireInput(Event):
+    pass
 
 class DartInput(Component):
     channel = 'serial'
@@ -30,16 +32,22 @@ class FileInput(Component):
         with open(f, 'r') as infile:
             self.data = infile.read().split(' ')
         players = self.data[0].split(':')[1].split(',')
-        self.fire(StartGame(players))
+        self.fire(StartGame(players, 301))
+        self.pointer = 1
 
-    def GameInitialized(self, state):
-        for s in self.data[1:]:
-            if s.startswith('('): # this is a comment, so ignore.
-                pass
-            elif s == '|': # next player
-                self.fire(ReceiveInput('generic', 'next_player'))
-            else:
-                self.fire(ReceiveInput('code', s))
+    def GameInitialized(self, *args):
+        Timer(3, FireInput(), persist=True).register(self)
+
+    def FireInput(self):
+        s = self.data[self.pointer]
+        while s.startswith('('): # this is a comment, so ignore.
+            self.pointer += 1
+            s = self.data[self.pointer]
+        if s == '|': # next player
+            self.fire(ReceiveInput('generic', 'next_player'))
+        else:
+            self.fire(ReceiveInput('code', s))
+        self.pointer += 1
 
 
 '''

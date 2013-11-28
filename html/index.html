@@ -103,10 +103,25 @@
 		</td>
 		<td>{{p.rank + 1}}</td>
 		<td class="large-entry">{{p.name}}</td>
-		<td><span ng-repeat="dart in p.last_frame.darts track by $index" class="dart"><span class="dart" ng-class="formatDartClass(dart)">{{formatDart(dart)}}</span> </span><span ng-if="p.last_frame.text"> = </span><span class="darttext">{{p.last_frame.text}}</span> </td>
+		<td ng-if="p.last_frame.darts.length">
+		  <span ng-repeat="dart in p.last_frame.darts track by $index" class="dart" ng-if="! p.editingLastDarts">
+		    <span class="dart" ng-class="formatDartClass(dart)">{{formatDart(dart)}}</span> 
+		  </span>
+		  <span ng-if="p.last_frame.text"> = </span>
+		  <span class="darttext">{{p.last_frame.text}}</span> 
+		  <a href="" ng-click="startEditingDarts(p)"><i class="fa fa-edit" ng-if="! p.editingLastDarts"></i></a>
+		  <span ng-if="p.editingLastDarts">
+		    <input type="text" class="form-control" style="width:50%;" ng-model="p.lastDartsEdited">
+		    <a href="" ng-click="saveDarts(p)"><i class="fa fa-check"></i></a>
+		    <a href="" ng-click="abortEditingDarts(p)"><i class="fa fa-times"></i></a>
+		  </span>
+		</td>
+		<td ng-if="! p.last_frame.darts.length">
+		  -
+		</td>
 		<td class="large-entry">{{p.score}}</td>
 		<td>{{p.frames}}</td>
-		<td><input type="checkbox" ng-model="p.skipped" ng-click="skipPlayer($index)"></td>
+		<td><input ng-if="p.score > 0" type="checkbox" ng-model="p.skipped" ng-click="skipPlayer($index)"></td>
 	      </tr>
 	    </tbody>
 	  </table>

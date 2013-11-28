@@ -146,11 +146,18 @@ class GameState(object):
         lst = [p.get_info() for p in self.players]
         return sorted(lst, key=itemgetter(sortby))
 
+    def change_player_history(self, player, frame, oldDarts, newDarts):
+        if self.state.players[player].history[frame] == oldDarts:
+            self.state.players[player].history[frame] == newDarts
+            self._update_ranks()
+            return True
+        return False
+
 class DartGame(Component):
     NUMBEROFDARTS = 3
-
-    def started(self, x):
-        # set the initial state to a default state
+    
+    def __init__(self):
+        Component.__init__(self)
         self.state = GameState([], 0, None)
         
     def StartGame(self, players, startvalue):
@@ -193,6 +200,10 @@ class DartGame(Component):
                 # None (for gameover) here, as then it would have done
                 # so already earlier.                
                 self.state.prepare_next_player()
+
+    def ChangeLastRound(self, player, oldDarts, newDarts):
+        if self.state.changePlayerHistory(player, -1, oldDarts, newDarts):
+            self.fire(GameStateChanged())
 
     def ReceiveInput(self, source, value):
         print ("State is %s, input is %r from %r" % (self.state.state, value, source))
