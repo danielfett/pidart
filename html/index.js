@@ -172,7 +172,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 		$('a[href="#order"]').trigger('click');
 	    }
 	}
-		
+
 	$scope.$apply();
 	fitText();
     }
@@ -180,7 +180,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     $scope.skipPlayer = function(player) {
 	$scope.sock.send("cmd:skip-player " + player);
     }
-	
+
     $scope.newGame = function() {
 	if ($scope.selectedPlayers.length < 2) {
 	    alert("Please select at least two players.");
@@ -327,7 +327,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	    mult = 'double';
 	} else if (d.substring(0, 1) == 'T') {
 	    mult = 'triple';
-	} 	
+	}
 	return 'dart ' + mult;
     }
 
@@ -345,17 +345,17 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	    p.editingLastDarts = false;
 	    return;
 	}
-	var input = p.lastDartsEdited.toUpperCase();
-	if (! /^([SDT]?(1?[0-9]|20)( [SDT]?(1?[0-9]|20)){0,2})?$/.test(input)) {
-	    alert('Please adhere to the following format: ^[SDT]?(1?[0-9]|20)( [SDT]?(1?[0-9]|20)){0,2}$');
+	var input = p.lastDartsEdited;
+	if (! /^([SDT]?(1?[0-9]|20)i?( [SDT]?(1?[0-9]|20)i?){0,2})?$/.test(input)) {
+	    alert('Please adhere to the following format: ^[SDT]?(1?[0-9]|20)i?( [SDT]?(1?[0-9]|20)i?){0,2}$');
 	    return;
 	}
 	$scope.sock.send(
-	    'cmd:change-last-round ' 
-		+ p.started 
-		+ ' ' 
-		+ p.last_frame.darts.join(',') 
-		+ ' ' 
+	    'cmd:change-last-round '
+		+ p.started
+		+ ' '
+		+ p.last_frame.darts.join(',')
+		+ ' '
 		+ input.replace(/ /g, ',')
 	);
 	p.editingLastDarts = false;
@@ -378,7 +378,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	'<a ng-click="disableEditor()"><i class="fa fa-times"></i></a>.' +
 	'</div>' +
 	'</div>';
-    
+
     return {
 	restrict: "A",
 	replace: true,
@@ -392,12 +392,12 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 		editableValue: $scope.value,
 		editorEnabled: false
 	    };
-	    
+
 	    $scope.enableEditor = function() {
 		$scope.view.editorEnabled = true;
 		$scope.view.editableValue = $scope.flattenDarts($scope.value);
 	    };
-	    
+
 	    $scope.flattenDarts = function(darts) {
 		return darts.join(' ');
 	    }
@@ -409,11 +409,11 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 		$scope.sock.send('cmd:change-last-round ' + $scope.player + ' ' + input.replace(/ /g, ','));
 		return true;
 	    }
-	    
+
 	    $scope.disableEditor = function() {
 		$scope.view.editorEnabled = false;
 	    };
-	    
+
 	    $scope.save = function() {
 		$scope.saveDarts($scope.view.editableValue);
 		//if (res) {

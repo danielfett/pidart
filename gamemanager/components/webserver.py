@@ -27,16 +27,19 @@ class DartsServer(Component):
 
     @staticmethod
     def sanitize_input_dart(dart):
-        try:
-            dart = dart.upper()
-            # the following fails if len(dart) == 0:
-            if (dart[0] not in ['S', 'D', 'T']):
-                dart = 'S%s' % dart
-            # fails if dart not numeric:
-            if 1 <= int(dart[1:]) <= 20:
-                raise ValueError()
-        except (ValueError, IndexError), e:
-            raise ValueError()
+        inner = False
+        if dart[-1] == 'i':
+            inner = True
+            dart = dart[:-1]
+        dart = dart.upper()
+        # the following fails if len(dart) == 0:
+        if (dart[0] not in ['S', 'D', 'T']):
+            dart = 'S%s' % dart
+        # fails if dart not numeric:
+        if not 1 <= int(dart[1:]) <= 20:
+            raise ValueError("Dart's value should be above 0 and below 21.")
+        if inner and dart[0] == 'S':
+            dart = "%si" % dart
         return dart
             
 
@@ -55,8 +58,8 @@ class DartsServer(Component):
                     self.fireEvent(StartGame(players, int(pars[2])));
                 elif pars[0] == 'cmd:change-last-round':
                     player = int(pars[1])
-                    oldDarts = map(sanitize_input_dart, pars[2].split(','))
-                    newDarts = map(sanitize_input_dart, pars[3].split(','))
+                    oldDarts = map(self.sanitize_input_dart, pars[2].split(','))
+                    newDarts = map(self.sanitize_input_dart, pars[3].split(','))
                     self.fireEvent(ChangeLastRound(player, oldDarts, newDarts))
             except Exception, e:
                 print "Exception when parsing command '%s':" % data
