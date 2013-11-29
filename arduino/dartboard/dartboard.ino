@@ -5,6 +5,7 @@ int inc = 12;
 int butpin[] = {29,28,31,33,26,51};
 int butc = 6;
 int butgnd = 53;
+int ledpin = 13;
 int out;
 int in;
 int i;
@@ -29,6 +30,8 @@ void setup() {
   }
   pinMode(butgnd, OUTPUT);
   digitalWrite(butgnd, 0); // set gnd for buttons
+  pinMode(ledpin, OUTPUT);
+  digitalWrite(ledpin, HIGH);
 }
 
 // the loop routine runs over and over again forever:
@@ -38,12 +41,14 @@ void loop() {
      for (in = 0; in < inc; in++) {
         if (! digitalRead(inpin[in])) {
            Serial.write((out << 4) + in);
+           digitalWrite(ledpin, LOW);
            delay(250);
            while (! digitalRead(inpin[in])) {
               Serial.write(0x70);
               delay(400);
            }
            delay(250);
+           digitalWrite(ledpin, HIGH);
         }
      }
      digitalWrite(outpin[out], HIGH);
@@ -51,11 +56,13 @@ void loop() {
   for (i = 0; i < butc; i++) {
     if (! digitalRead(butpin[i])) {
       Serial.write(0x80 + i);
+      digitalWrite(ledpin, LOW);
       delay(400);
       while (! digitalRead(butpin[i])) {
         delay(300);
       }
       delay(250);
+      digitalWrite(ledpin, HIGH);
     }
   }
 }
