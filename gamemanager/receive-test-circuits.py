@@ -22,8 +22,9 @@ class SerInput(Component):
     
     def helloEv(self):
         print ('test')
-        
 
-SerInput(device = '/dev/ttyACM0').run()
-''' + Debugger() + TT()
-d.run()'''
+if __name__ == "__main__":        
+
+    SerInput(device = '/dev/ttyACM0').run()
+    ''' + Debugger() + TT()
+    d.run()'''

@@ -2,11 +2,14 @@
 
 from circuits import Component, handler
 from datetime import datetime
+from os.path import join
+
+LOG_ROOT = 'logs'
 
 class Logger(Component):
     def GameInitialized(self, state):
         print ("Logger started.")
-        filename = "%s.dartlog" % state.id
+        filename = join(LOG_ROOT, "%s.dartlog" % state.id)
         self.file = open(filename, 'w')
         self.file.write("Players:%s " % (','.join([p.name for p in state.players])))
 
@@ -27,7 +30,7 @@ import sqlite3
 
 class DetailedLogger(Component):
     def started(self, x):
-        self.conn = sqlite3.connect('darts.db')
+        self.conn = sqlite3.connect(join(LOG_ROOT, 'darts.db'))
         self.cursor = self.conn.cursor()
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS games (id TEXT, startvalue INT, date DATETIME)''')
         self.cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS index_id ON games (id)''')

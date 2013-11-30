@@ -111,14 +111,15 @@ class GameState(object):
             self.players.append(Player(players[i], i, startvalue))
 
         if len(self.players):
-            self.nextPlayer = self.players[0] # fails if zero players
+            self.nextPlayer = self.players[0]
         self.currentDarts = []
-        self.currentScore = 0
+        self.previousScore = self.currentScore = 0
         self._update_ranks()
         self.id = gameid
 
     def add_dart(self, dart, s):
         self.currentDarts.append(dart)
+        self.previousScore = self.currentScore
         self.currentScore += s
         return self.currentPlayer.check_score(self.currentScore)
 
@@ -126,6 +127,7 @@ class GameState(object):
         self.currentPlayer.add_score(self.currentDarts, self.currentScore)
         self.currentDarts = []
         self.currentScore = 0
+        self.previousScore = 0
         self._update_ranks()
 
     def _get_next_player(self):
@@ -301,7 +303,7 @@ if __name__ == "__main__":
     parser.add_argument('--init', default=301, type=int, 
                         help="initial number of points")
     parser.add_argument('--snd', default='legacy',
-                        help="sound system (none/legacy/espeak)")
+                        help="sound system (none/isat/legacy/espeak)")
     parser.add_argument('--dev', default='/dev/ttyUSB0', 
                         help="input USB device (use none for no USB input)")
     parser.add_argument('--file', help="Read input from this file.")
@@ -323,6 +325,9 @@ if __name__ == "__main__":
     elif args.snd == 'espeak':
         from components.espeaksounds import EspeakSounds
         d += EspeakSounds()
+    elif args.snd == 'isat':
+        from components.isatsounds import ISATSounds
+        d += ISATSounds()
     if not args.nolog:
         from components.logger import DetailedLogger
         d += DetailedLogger()
