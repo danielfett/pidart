@@ -4,7 +4,7 @@ import unittest
 
 class TestHit(unittest.TestCase):
     def setUp(self):
-        self.mock_1 = GameState(['AB', 'CD'], 301, 'fake1')
+        self.mock_1 = GameState(['AB', 'CD'], 301, 'fake1', True)
         self.mock_1.advance_player()
         self.mock_1.add_dart('T20', 60)
         self.mock_1.add_dart('T20', 60)

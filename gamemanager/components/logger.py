@@ -3,14 +3,18 @@
 from circuits import Component, handler
 from datetime import datetime
 from os.path import join
+from tempfile import TemporaryFile, NamedTemporaryFile
 
 LOG_ROOT = 'logs'
 
 class Logger(Component):
     def GameInitialized(self, state):
         print ("Logger started.")
-        filename = join(LOG_ROOT, "%s.dartlog" % state.id)
-        self.file = open(filename, 'w')
+        if not state.testgame:
+            filename = join(LOG_ROOT, "%s.dartlog" % state.id)
+            self.file = open(filename, 'w')
+        else:
+            self.file = TemporaryFile()
         self.file.write("Players:%s " % (','.join([p.name for p in state.players])))
 
     def Hit(self, state, code):
@@ -29,8 +33,16 @@ class Logger(Component):
 import sqlite3
 
 class DetailedLogger(Component):
+    def __init__(self, is_test = False):
+        Component.__init__(self)
+        if not is_test:
+            self.filename = join(LOG_ROOT, 'darts.db')
+        else:
+            self.file = NamedTemporaryFile()
+            self.filename = self.file.name
+
     def started(self, x):
-        self.conn = sqlite3.connect(join(LOG_ROOT, 'darts.db'))
+        self.conn = sqlite3.connect(self.filename)
         self.cursor = self.conn.cursor()
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS games (id TEXT, startvalue INT, date DATETIME)''')
         self.cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS index_id ON games (id)''')

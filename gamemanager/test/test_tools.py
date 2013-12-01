@@ -44,11 +44,11 @@ class TestAdjacent(unittest.TestCase):
 
 class TestConvenience(unittest.TestCase):
     def setUp(self):
-        self.mock_1 = GameState(['AB', 'CD'], 301, 'fake1')
+        self.mock_1 = GameState(['AB', 'CD'], 301, 'fake1', True)
         self.mock_1.advance_player()
         self.mock_1.add_dart('T10', 30)
 
-        self.mock_2 = GameState(['AB', 'CD'], 301, 'fake2')
+        self.mock_2 = GameState(['AB', 'CD'], 301, 'fake2', True)
         self.mock_2.advance_player()
         self.mock_2.add_dart('T10', 30)
         self.mock_2.add_dart('T10', 30)

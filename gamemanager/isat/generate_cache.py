@@ -1,5 +1,6 @@
 from .rules import texts
 from .tools import tts_filename, rot13
+from subprocess import Popen, PIPE
 
 '''
 Assemble parameters for mary speech engine.
@@ -29,10 +30,14 @@ def mary_params(text, emotion):
         'AUDIO': 'WAVE_FILE',
         }
 
+def convert_sample_rate(infile, outfilename):
+    sox = Popen(['sox', '-r', '16000', '-', '-r', '44100', outfilename], stdin=PIPE)
+    sox.stdin.write(infile.read())
+    sox.communicate()
 
 
 '''
-Generate cached voices if called directly.
+Generate cached voices.
 '''
 if __name__ == '__main__':
     print "Generating cache of voices."
@@ -47,7 +52,6 @@ if __name__ == '__main__':
         req = Request(SERVER_URL, data)
         response = urlopen(req)
         outfile = tts_filename(id)
-        with open(outfile, 'w') as f:
-            f.write(response.read())
+        convert_sample_rate(response, outfile)
         
     

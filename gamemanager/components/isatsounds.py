@@ -57,16 +57,20 @@ class ISATSounds(Component):
             sleep(0.1)
         self.sounds_tts[text_id].play()
 
-    def _say_from_rule(self, rules):
-        weights_sum = sum([x['weight'] for x in rules if x['use']])
-        rnd = randint(0, weights_sum)
-        for rule in rules:
-            if not rule['use']:
-                continue
-            rnd -= rule['weight']
-            if rnd <= 0:
-                self._say(rule['text'])
-                return
+    def _say_from_rule(self, rules, alt):
+        try:
+            weights_sum = sum([x['weight'] for x in rules if x['use']])
+            rnd = randint(0, weights_sum)
+            for rule in rules:
+                if not rule['use']:
+                    continue
+                rnd -= rule['weight']
+                if rnd <= 0:
+                    self._say(rule['text'])
+                    return
+        except Exception, e:
+            print e
+            self._play(alt)
             
 
     def DartStuck(self, *args):
@@ -77,13 +81,13 @@ class ISATSounds(Component):
 
     def Hit(self, state, code):
         sleep(0.25)
-        self._say_from_rule(hit(state))
+        self._say_from_rule(hit(state), 'beep')
 
     def HitBust(self, state, code):
-        self._say_from_rule(hit_bust(state))
+        self._say_from_rule(hit_bust(state), 'winner')
 
     def HitWinner(self, state, code):
-        self._say_from_rule(hit_winner(state))
+        self._say_from_rule(hit_winner(state), 'finish')
 
     def EnterHold(self, *args):
         sleep(0.5)

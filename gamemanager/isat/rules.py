@@ -55,12 +55,12 @@ texts = {
     'over_100': ('Over 100!', 'excited'),
 
     # texts for hit_winner
-    'checked_out_winner': ('Winner!', 'excited'),
+    'checked_out_winner': ("Checked out! You are today's winner!", 'excited'),
     'checked_out': ('Checked out!', 'happy'),
     
     # texts for hit_bust
     'bust': ('Bust!', 'amused'),
-    'bust_pro': ('Bust like a pro!', 'excited'),
+    'bust_pro': ('Bust! Like a pro!', 'amused'),
     'double_bust': ('Double bust!', 'happy'),
     'triple_bust': ('Amazing triple bust!', 'excited'),
     'highest_bust': ('Highest possible bust.', 'interested'),
@@ -76,7 +76,8 @@ Now we can define the rules for these texts.
 '''
 
 def hit(state):
-    dart, dart_num, darts_so_far, score_before_frame, score_before, score_after = convenience(state)
+    dart, dart_num, darts_so_far, score_before_frame, \
+        score_before, score_after = convenience(state)
     '''
     We now assemble the rules-list. Each rule is a dictionary with the
     following elements:
@@ -153,7 +154,8 @@ def hit(state):
     return rules
 
 def hit_winner(state):
-    dart, dart_num, darts_so_far, score_before_frame, score_before, score_after = convenience(state)
+    dart, dart_num, darts_so_far, score_before_frame, \
+        score_before, score_after = convenience(state)
     num_before = len(state.winners()) # players that checked out before
     rules = [
         {
@@ -171,7 +173,8 @@ def hit_winner(state):
     return rules
 
 def hit_bust(state):
-    dart, dart_num, darts_so_far, score_before_frame, score_before, score_after = convenience(state)
+    dart, dart_num, darts_so_far, score_before_frame, \
+        score_before, score_after = convenience(state)
     # note that score_after is now a negative number
     rules = [
         {

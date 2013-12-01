@@ -103,7 +103,7 @@ class Player(object):
             self.add_score(darts, darts_sum)  
 
 class GameState(object):
-    def __init__(self, players, startvalue, gameid):
+    def __init__(self, players, startvalue, gameid, testgame):
         self.state = None
         self.players = []
         self.startvalue = startvalue
@@ -116,6 +116,7 @@ class GameState(object):
         self.previousScore = self.currentScore = 0
         self._update_ranks()
         self.id = gameid
+        self.testgame = testgame
 
     def add_dart(self, dart, s):
         self.currentDarts.append(dart)
@@ -192,15 +193,16 @@ class GameState(object):
 class DartGame(Component):
     NUMBEROFDARTS = 3
     
-    def __init__(self):
+    def __init__(self, one_game = False):
         Component.__init__(self)
-        self.state = GameState([], 0, None)
+        self.state = GameState([], 0, None, True)
+        self.one_game = one_game
         
-    def StartGame(self, players, startvalue):
+    def StartGame(self, players, startvalue, testgame):
         # generate a more or less unique id for this game
         date = datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
         gameid = "%s--%s" % (node(), date)
-        self.state = GameState(players, startvalue, gameid)
+        self.state = GameState(players, startvalue, gameid, testgame)
         self.fire(GameInitialized(self.state))
         self.start_frame()
 
@@ -290,10 +292,12 @@ class DartGame(Component):
 
     def gameover(self):
         self.state.state = 'gameover'
-        self.fire(GameOver(self.state))
+        self.fire(GameOver(deepcopy(self.state)))
         print ("--> Game is over! Ranking:")
         for w in self.state.player_list(sortby='rank'):
             print ("%d: %s" % (w['rank'] + 1, w['name']))
+        if self.one_game:
+            self.root.stop()
 
 
 if __name__ == "__main__":
@@ -309,9 +313,11 @@ if __name__ == "__main__":
     parser.add_argument('--file', help="Read input from this file.")
     parser.add_argument('--debug', action='store_true', help="Enable debug output")
     parser.add_argument('--nolog', action='store_true', help="Disable single-dart logging")
+    parser.add_argument('--test', action='store_true', help="This is a test game, do no permanent changes.")
+    parser.add_argument('--one-game', action='store_true', help="Play only one game and then finish.")
     args = parser.parse_args()
 
-    d = DartGame() + Webserver
+    d = DartGame(args.one_game) + Webserver
     d += Logger()
     if args.dev != 'none':
         d += DartInput(args.dev)
@@ -332,6 +338,6 @@ if __name__ == "__main__":
         from components.logger import DetailedLogger
         d += DetailedLogger()
     if len(args.players):
-        d.fire(StartGame(args.players, args.init))
+        d.fire(StartGame(args.players, args.init, args.test))
     d.run()
-    
+    print "ENDE"

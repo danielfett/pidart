@@ -1,7 +1,8 @@
-from circuits import Component, Timer, Event
+from circuits import Component, Event
 from events import ReceiveInput, StartGame
 from circuits.io import Serial, File, Process
 from codes import FIELDCODES
+from time import sleep
 
 
 class FireInput(Event):
@@ -27,27 +28,29 @@ class DartInput(Component):
                 raise Exception("Unknown fieldcode: %x" % inp)
 
 class FileInput(Component):
-    def __init__(self, f):
+    def __init__(self, f, delay = 3, test = False):
         super(FileInput, self).__init__()
         with open(f, 'r') as infile:
             self.data = infile.read().split(' ')
         players = self.data[0].split(':')[1].split(',')
-        self.fire(StartGame(players, 301))
-        self.pointer = 1
+        self.fire(StartGame(players, 301, test))
+        self.pointer = None
+        self.delay = delay
 
     def GameInitialized(self, *args):
-        Timer(3, FireInput(), persist=True).register(self)
-
-    def FireInput(self):
-        s = self.data[self.pointer]
-        while s.startswith('('): # this is a comment, so ignore.
-            self.pointer += 1
+        self.pointer = 1
+    
+    def generate_events(self, *args):
+        if self.pointer != None and self.pointer < len(self.data):
             s = self.data[self.pointer]
-        if s == '|': # next player
-            self.fire(ReceiveInput('generic', 'next_player'))
-        else:
-            self.fire(ReceiveInput('code', s))
-        self.pointer += 1
+            while s.startswith('('): # this is a comment, so ignore.
+                self.pointer += 1
+                s = self.data[self.pointer]
+            if s == '|': # next player
+                self.fire(ReceiveInput('generic', 'next_player'))
+            else:
+                self.fire(ReceiveInput('code', s))
+            self.pointer += 1
 
 
 '''

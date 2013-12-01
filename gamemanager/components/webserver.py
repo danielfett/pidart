@@ -55,7 +55,7 @@ class DartsServer(Component):
                     self.fireEvent(SkipPlayer(int(pars[1])))
                 elif pars[0] == 'cmd:new-game':
                     players = pars[1].split(',')
-                    self.fireEvent(StartGame(players, int(pars[2])));
+                    self.fireEvent(StartGame(players, int(pars[2]), False));
                 elif pars[0] == 'cmd:change-last-round':
                     player = int(pars[1])
                     oldDarts = map(self.sanitize_input_dart, pars[2].split(','))
