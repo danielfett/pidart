@@ -25,8 +25,8 @@ these with respect to the field that was hit (c).
 '''
 
 fieldtexts = {
-    'S25': ("Bull's eye!", 'happy'),
-    'D25': ("Inner Bull's eye!", 'excited')
+    'code_S25': ("Bull's eye!", 'happy'),
+    'code_D25': ("Inner Bull's eye!", 'excited')
 }
 
 multiplicators = {
@@ -98,7 +98,7 @@ def in_ring(sequence):
     return False
 
 '''
-Say if two fields are adjacent to each other. Works only with remove
+Say if two fields are adjacent to each other. Works only with removed
 suffixes.
 '''
 def adjacent(a, b):

@@ -36,12 +36,13 @@ text then. Did you know that EMACS has a macro called 'rot13-region'?
 '''
 texts = {
     # texts for general usage
-    'next_player': ('Next player.', 'relaxed'),
-    'press_start': ('Remove darts and press start!', 'relaxed'),
+    'next_player': ('Next player.', 'pleased'),
+    'press_start': ('Remove darts!', 'pleased'),
 
     # texts for a single dart
     'single_1': ('The right one!', 'excited'),
-    'single_1_alt_1': ('Nice one!', 'amused'),
+    'single_1_alt_1': ('A Nice one!', 'amused'),
+    'single_1_es': ('The one and only one!', 'interested'),
 
     # texts for two darts
     'again': ('And again!', 'happy'),
@@ -53,6 +54,10 @@ texts = {
     'triple_20': ('#Bar, uhaqerq, naq, rvtugl! Vaperqvoyr! Nznmvat! Snagnfgvp!', 'excited'),
     '100': ('One Hundred!', 'excited'),
     'over_100': ('Over 100!', 'excited'),
+
+    # text for checkout zone
+    'checkout_area': ('Welcome to checkout area!', 'happy'),
+    'checkout_single': ('Single-Dart check-out-able', 'happy'),
 
     # texts for hit_winner
     'checked_out_winner': ("Checked out! You are today's winner!", 'excited'),
@@ -111,6 +116,12 @@ def hit(state):
             'weight': 30
             },
 
+        {
+            'use': dart == 'S1',
+            'text': 'single_1_es',
+            'weight': 30
+            },
+
         # say 'and again' when the same dart is hit again
         {
             'use': (dart_num > 1) and darts_so_far[-2] == dart,
@@ -147,6 +158,18 @@ def hit(state):
         {
             'use': (score_before_frame - score_after) > 100 ,
             'text': 'over_100',
+            'weight': 150
+            },
+
+        {
+            'use': score_after < 180,
+            'text': 'checkout_area',
+            'weight': 150
+            },
+
+        {
+            'use': (score_after < 60) and ((score_after <= 20) or (score_after % 3 == 0)),
+            'text': 'checkout_single',
             'weight': 150
             },
         ]
