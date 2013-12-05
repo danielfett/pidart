@@ -40,6 +40,10 @@ for c in range(1, 21):
         code = "code_%s%s" % (m, c)
         fieldtexts[code] = multiplicators[m](c)
 
+'''Prepare announcements for 100 to 180'''
+for c in range(100, 181):
+    fieldtexts['score_%s' % c] = ('%s' % c, 'excited')
+
 '''
 Dart codes (e.g., S10) come with an "i" in the end iff the dart hit
 the inner of the two single-fields. We are not interested in this, so

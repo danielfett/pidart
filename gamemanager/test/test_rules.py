@@ -12,8 +12,7 @@ class TestHit(unittest.TestCase):
         
     def test_a(self):
         assert len(self.res) > 0
-        self.assertIn({'use': True, 'text': 'over_100', 'weight': 150}, self.res)
-        self.assertIn({'use': False, 'text': '100', 'weight': 150}, self.res)
+        self.assertIn({'use': False, 'text': 'score_120', 'weight': 150}, self.res)
 
     def test_b(self):
         for e in self.res:

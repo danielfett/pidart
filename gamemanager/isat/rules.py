@@ -38,6 +38,10 @@ texts = {
     # texts for general usage
     'next_player': ('Next player.', 'pleased'),
     'press_start': ('Remove darts!', 'pleased'),
+    'good_choice': ('Excellent choice', 'pleased'),
+    'train': ('Did you train for that?', 'pleased'),
+    'less_than_10': ('#Jung qvq lbh qbb?', 'disappointed'),
+    'less_than_10_alt_1': ('#Hu-bu.', 'disappointed'),
 
     # texts for a single dart
     'single_1': ('The right one!', 'excited'),
@@ -52,12 +56,10 @@ texts = {
     'double_washing_machine': ('Double washing machine!', 'happy'),
     'triple_washing_machine': ('Triple washing machine!', 'happy'),
     'triple_20': ('#Bar, uhaqerq, naq, rvtugl! Vaperqvoyr! Nznmvat! Snagnfgvp!', 'excited'),
-    '100': ('One Hundred!', 'excited'),
-    'over_100': ('Over 100!', 'excited'),
 
     # text for checkout zone
     'checkout_area': ('Welcome to checkout area!', 'happy'),
-    'checkout_single': ('Single-Dart check-out-able', 'happy'),
+    'checkout_single': ('Single-Dart check-outable', 'happy'),
 
     # texts for hit_winner
     'checked_out_winner': ("Checked out! You are today's winner!", 'excited'),
@@ -96,6 +98,26 @@ def hit(state):
     '''
        
     rules = [
+        {
+            'use': (score_before - score_after) < 5,
+            'text': 'good_choice',
+            'weight': 20,
+            },
+        {
+            'use': len(darts_so_far) == 3 and (darts_so_far[0] == darts_so_far[1] == darts_so_far[2]),
+            'text': 'train',
+            'weight': 20,
+            },
+        {
+            'use': score_after < 10,
+            'text': 'less_than_10',
+            'weight': 50,
+            },
+        {
+            'use': score_after < 10,
+            'text': 'less_than_10_alt_1',
+            'weight': 50,
+            },
         # add the default field code text with a weight of 50
         {
             'use': True,
@@ -150,19 +172,7 @@ def hit(state):
 
         # Just a lot of points...
         {
-            'use': (score_before_frame - score_after) == 100 ,
-            'text': '100',
-            'weight': 150
-            },
-
-        {
-            'use': (score_before_frame - score_after) > 100 ,
-            'text': 'over_100',
-            'weight': 150
-            },
-
-        {
-            'use': score_after < 180,
+            'use': score_after <= 180 and score_before > 180,
             'text': 'checkout_area',
             'weight': 150
             },
@@ -170,6 +180,13 @@ def hit(state):
         {
             'use': (score_after < 60) and ((score_after <= 20) or (score_after % 3 == 0)),
             'text': 'checkout_single',
+            'weight': 120
+            },
+
+        # over 100
+        {
+            'use': (len(darts_so_far) == 3) and (score_before_frame - score_after) >= 100,
+            'text': 'score_%s' % (score_before_frame - score_after),
             'weight': 150
             },
         ]
