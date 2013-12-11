@@ -268,6 +268,15 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	return {c: currentRow};
     };
 
+    $scope.submitResult = function() {
+	var ranking = [];
+	$.each($scope.state.ranking, function (i, info) {
+	    ranking[info['name']] = info['rank'] + 1;
+	});
+	urlparam = encodeURIComponent(JSON.stringify(ranking));
+	window.open('http://infsec.uni-trier.de/dartenbank/input/remote-input.php?standings=' + urlparam);
+    }
+
 
     $scope.sortAvailablePlayers = function() {
 	$scope.availablePlayers = $filter('orderBy')($scope.availablePlayers, ['-games', '-rank']);
