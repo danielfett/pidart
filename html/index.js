@@ -97,6 +97,8 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     $scope.playersInChart = [];
     $scope.initialValue = 301;
     $scope.predicate = 'p.started';
+    $scope.chartUpdating = true; // chart is being updated (show loader)
+    $scope.oldChartData = false; // We use this to only update the chart when something has actually changed.
 
     var history = {};
     history.type="LineChart";
@@ -126,6 +128,8 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	    }
 	});
 	$scope.updateChartFull();
+	window.setInterval($scope.updateChartFull, 1000 * 60 * 5);
+
     });
 
     $scope.sock.onopen = function() {
@@ -163,10 +167,6 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	}
 
 	if (newStateState != oldStateState) {
-	    if (newStateState == 'null') {
-		$scope.updateChartFull();
-		$('a[href="#newgame"]').trigger('click');
-	    }
 	    if (newStateState == 'playing' && oldStateState != 'hold') {
 		console.debug("Oldstate was " + oldStateState);
 		$('a[href="#order"]').trigger('click');
@@ -202,11 +202,17 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     };
 
     $scope.updateChartFull = function() {
+	$scope.chartUpdating = true;
 	$.ajax('http://infsec.uni-trier.de/dartenbank/rpc/elo.php?count=30', {
 	    dataType: 'JSON'
 	})
 	    .done(function(data) {
+		if ($scope.oldChartData === data) {
+		    return;
+		}
+		$scope.oldChartData = data;
 		$scope.playersInChart = $.merge([], $scope.usualSuspects);
+		console.debug("-B");
 		$.each($scope.state.players, function (i, name) {
 		    if ($scope.playersInChart.indexOf(name) === -1) {
 			$scope.playersInChart.push(name);
@@ -239,6 +245,11 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 		});
 		$scope.updateChartRanking(false);
 		$scope.updateAvailablePlayers();
+		$scope.chartUpdating = false;
+	    })
+	    .fail(function(xhr, status, error) {
+		$scope.chartUpdating = false;
+		alert("Error updating chart from Dartenbank: " + error);
 	    });
     };
 
@@ -293,6 +304,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	})
 	    .done(function(data) {
 		$scope.availablePlayers = [];
+		$scope.selectedPlayers = [];
 		$.each(data, function(name, games) {
 		    var rank = 1500;
 		    if (typeof($scope.latestScores[name]) != 'undefined') {
