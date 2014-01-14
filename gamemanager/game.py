@@ -11,9 +11,13 @@ import argparse
 from circuits import Component, Event, Debugger, handler
 
 from events import *
-from components.webserver import Webserver
-from components.logger import Logger
+from components.webserver import DartsWebServer
+from components.logger import Logger, DetailedLogger
 from components.input import DartInput, FileInput
+from components.isatsounds import ISATSounds
+from components.espeaksounds import EspeakSounds
+from components.legacysounds import LegacySounds
+
 
 """ MAIN COMPONENT """
 
@@ -300,6 +304,65 @@ class DartGame(Component):
             self.root.stop()
 
 
+class DartManager(Component):
+
+    def __init__(self, one_game):
+        Component.__init__(self)
+        
+        DartGame(one_game).register(self)
+        DartsWebServer().register(self)
+        Logger().register(self)
+
+    def set_sound(self, soundsys):
+        if self.soundsys:
+            self.soundsys.unregister()
+            self.soundsys = None
+        if soundsys == 'isat':
+            self.soundsys = ISATSounds()
+        elif soundsys == 'espeak':
+            self.soundsys = EspeakSounds()
+        elif soundsys == 'legacy':
+            self.soundsys = LegacySounds()
+        if self.soundsys != None:
+            self.soundsys.register(self)
+    
+    def set_input_device(self, path):
+        if self.inputsys:
+            self.inputsys.unregister()
+            self.inputsys = None
+        if device:
+            self.inputsys = DartInput(path)
+
+    '''
+    File input unregisters itself once it has finished.
+    '''
+    def set_input_file(self, path):
+        if path:
+            fi = FileInput(path)
+            fi.register(self)
+
+    def set_logging(self, enable):
+        if enable:
+            if not self.logsys:
+                self.logsys = DetailedLogger()
+                self.logsys.register(self)
+        else:
+            if self.logsys:
+                self.logsys.unregister()
+
+    @handler('SetConfig')
+    def handle_set_config(self, name, *args):
+        if name == 'sound':
+            self.set_sound(*args)
+        elif name == 'input_device':
+            self.set_input_device(*args)
+        elif name == 'input_file':
+            self.set_input_file(*args)
+        elif name == 'logging':
+            self.set_logging(*args)
+            
+    
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Start a dart game.')
     parser.add_argument('players', metavar='P', type=str, nargs='*',
@@ -317,27 +380,17 @@ if __name__ == "__main__":
     parser.add_argument('--one-game', action='store_true', help="Play only one game and then finish.")
     args = parser.parse_args()
 
-    d = DartGame(args.one_game) + Webserver
-    d += Logger()
-    if args.dev != 'none':
-        d += DartInput(args.dev)
+    m = DartManager(args.one_game)
+
     if args.file:
-        d += FileInput(args.file)
+        m.fire(SetConfig('input_file', args.file))
+    if args.dev != 'none':
+        m.fire(SetConfig('input_device', args.dev))
     if args.debug:
-        d += Debugger(IgnoreChannels = ['web'])
-    if args.snd == 'legacy':
-        from components.legacysounds import LegacySounds
-        d += LegacySounds()
-    elif args.snd == 'espeak':
-        from components.espeaksounds import EspeakSounds
-        d += EspeakSounds()
-    elif args.snd == 'isat':
-        from components.isatsounds import ISATSounds
-        d += ISATSounds()
-    if not args.nolog:
-        from components.logger import DetailedLogger
-        d += DetailedLogger()
+        m += Debugger(IgnoreChannels = ['web'])
+
+    m.fire(SetConfig('sound', args.snd))
+
     if len(args.players):
-        d.fire(StartGame(args.players, args.init, args.test))
-    d.run()
-    print "ENDE"
+        m.fire(StartGame(args.players, args.init, args.test))
+    m.run()

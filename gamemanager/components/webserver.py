@@ -13,7 +13,7 @@ from events import ReceiveInput, SkipPlayer, StartGame, ChangeLastRound
 class SendState(Event):
     pass
 
-class DartsServer(Component):
+class DartsWSServer(Component):
     channel = "wsserver"
 
     def __init__(self):
@@ -118,10 +118,12 @@ class Root(Controller):
         return basic_auth(self.request, self.response, realm, users, encrypt)
     '''
 
-Webserver = Server(('0.0.0.0', 8080))
-Static(docroot="../html/").register(Webserver)
-DartsServer().register(Webserver)
-DartsServerController().register(Webserver)
-Root().register(Webserver)
-#Logger().register(Webserver)
-WebSockets("/websocket").register(Webserver)
+class DartsWebServer(Server):
+    def __init__(self):
+        Server.__init__(self, ('0.0.0.0', 8080))
+        Static(docroot="../html/").register(self)
+        DartsWSServer().register(self)
+        DartsServerController().register(self)
+        Root().register(self)
+        #Logger().register(Webserver)
+        WebSockets("/websocket").register(self)

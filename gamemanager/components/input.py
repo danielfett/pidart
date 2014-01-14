@@ -51,6 +51,8 @@ class FileInput(Component):
             else:
                 self.fire(ReceiveInput('code', s))
             self.pointer += 1
+        elif self.pointer >= len(self.data):
+            self.unregister()
 
 
 '''
