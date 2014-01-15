@@ -50,3 +50,6 @@ class ChangeLastRound(Event):
 
 class GameStateChanged(Event):
     """ Something (general) in the player's history changed. """
+
+class SetConfig(Event):
+    """ Set come config """

@@ -85,3 +85,11 @@ body {
 .dart.single:before {
     content:"·";
 }
+
+#ajax-loader {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    margin-left: -21px;
+    
+}

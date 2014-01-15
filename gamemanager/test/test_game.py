@@ -3,7 +3,7 @@ from game import DartGame
 from circuits import Component, Event, Debugger, handler
 
 from events import *
-from components.webserver import Webserver
+from components.webserver import DartsWebServer
 from components.logger import Logger, DetailedLogger
 from components.input import DartInput, FileInput
 from components.legacysounds import LegacySounds
@@ -61,8 +61,8 @@ class TestFullGame(unittest.TestCase):
         self.component(comp)
             
     def test_b(self):
+        #ws = DartsWebServer()
         comp = DartGame()\
-            + Webserver\
             + Logger()\
             + EspeakSounds()\
             + ISATSounds()\
@@ -70,6 +70,7 @@ class TestFullGame(unittest.TestCase):
             + DetailedLogger(True)\
             + FileInput(self.TESTFILE, delay=0.5, test=True)
         self.component(comp)
+        #ws.close()
 
     def test_run(self):
         p = Popen(['./game.py', '--dev', 'none', '--file', self.TESTFILE, '--nolog', '--test', '--one-game', '--snd', 'none'], stdout=PIPE, stderr=PIPE)
