@@ -1,5 +1,5 @@
 from .rules import texts
-from .tools import tts_filename, rot13
+from .tools import isat_filename, rot13
 from subprocess import Popen, PIPE
 
 '''
@@ -47,11 +47,13 @@ if __name__ == '__main__':
 
     print "Using server URL %s." % SERVER_URL
     for id, text in texts.items():
+        if type(text) != tuple:
+            continue
         print "Text: '''%s'''" % text[0]
         data = urlencode(mary_params(*text))
         req = Request(SERVER_URL, data)
         response = urlopen(req)
-        outfile = tts_filename(id)
+        outfile = isat_filename(id, text)
         convert_sample_rate(response, outfile)
         
     

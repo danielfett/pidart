@@ -1,5 +1,7 @@
 from isat.rules import *
+from isat.tools import isat_filename
 from game import GameState
+from os.path import exists
 import unittest
 
 class TestHit(unittest.TestCase):
@@ -45,7 +47,12 @@ class TestTexts(unittest.TestCase):
         for key, pair in texts.items():
             self.assertEquals(type(key), str)
             self.assertNotIn('/', key)
-            self.assertEquals(len(pair), 2)
-            text, emotion = pair
-            self.assertEquals(type(text), str)
-            self.assertIn(emotion, self.emotions)
+            self.assertIn(type(pair), [str, tuple])
+            if type(pair) == str:
+                self.assertEquals(pair[0:4], 'wav:')
+            else:
+                self.assertEquals(len(pair), 2)
+                text, emotion = pair
+                self.assertEquals(type(text), str)
+                self.assertIn(emotion, self.emotions)
+            self.assertEquals(exists(isat_filename(key, pair)), True)

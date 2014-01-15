@@ -8,7 +8,7 @@ import pygame
 from random import randint
 from os.path import exists
 
-from isat.tools import tts_filename
+from isat.tools import isat_filename
 from isat.rules import texts, hit, hit_bust, hit_winner
 
 class ISATSounds(Component):
@@ -37,8 +37,8 @@ class ISATSounds(Component):
                 self.sounds[n].set_volume(0)
             
         self.sounds_tts = {}
-        for id, _ in texts.items():
-            f = tts_filename(id)
+        for id, sound in texts.items():
+            f = isat_filename(id, sound)
             if not exists(f):
                 raise Exception("File does not exist: %s" % f)
             self.sounds_tts[id] = pygame.mixer.Sound(f)

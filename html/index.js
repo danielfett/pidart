@@ -269,7 +269,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     };
 
     $scope.submitResult = function() {
-	var ranking = [];
+	var ranking = {};
 	$.each($scope.state.ranking, function (i, info) {
 	    ranking[info['name']] = info['rank'] + 1;
 	});

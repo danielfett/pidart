@@ -40,8 +40,10 @@ texts = {
     'press_start': ('Remove darts!', 'pleased'),
     'good_choice': ('Excellent choice', 'pleased'),
     'train': ('Did you train for that?', 'pleased'),
+    'same_three_darts': ('What a boring choice.', 'bored'),
     'less_than_10': ('#Jung qvq lbh qbb?', 'disappointed'),
     'less_than_10_alt_1': ('#Hu-bu.', 'disappointed'),
+    'low_start': ('Just take your time.', 'bored'),
 
     # texts for a single dart
     'single_1': ('The right one!', 'excited'),
@@ -71,6 +73,11 @@ texts = {
     'double_bust': ('Double bust!', 'happy'),
     'triple_bust': ('Amazing triple bust!', 'excited'),
     'highest_bust': ('Highest possible bust.', 'interested'),
+
+    # wave files, these are referenced to by their path
+    'pull_up': 'wav:aviation/pull-up',
+    'pull_up_2': 'wav:aviation/terrain-ahead-pull-up',
+    'zonk': 'wav:zonk',
 }
 
 '''
@@ -109,6 +116,11 @@ def hit(state):
             'weight': 20,
             },
         {
+            'use': len(darts_so_far) == 3 and (darts_so_far[0] == darts_so_far[1] == darts_so_far[2]),
+            'text': 'same_three_darts',
+            'weight': 20,
+            },
+        {
             'use': score_after < 10,
             'text': 'less_than_10',
             'weight': 50,
@@ -117,6 +129,11 @@ def hit(state):
             'use': score_after < 10,
             'text': 'less_than_10_alt_1',
             'weight': 50,
+            },
+        {
+            'use': score_after > 100 and len(darts_so_far) == 1 and (score_before - score_after) < 10,
+            'text': 'low_start',
+            'weight': 20,
             },
         # add the default field code text with a weight of 50
         {
@@ -189,6 +206,19 @@ def hit(state):
             'text': 'score_%s' % (score_before_frame - score_after),
             'weight': 150
             },
+
+        # pull up!
+        {
+            'use': (len(darts_so_far) < 3) and score_after < 20,
+            'text': 'pull_up',
+            'weight': 80,
+            },
+        # pull up!
+        {
+            'use': (len(darts_so_far) < 3) and score_after < 10,
+            'text': 'pull_up_2',
+            'weight': 80,
+            },
         ]
 
     return rules
@@ -218,12 +248,6 @@ def hit_bust(state):
     # note that score_after is now a negative number
     rules = [
         {
-            'use': score_after > -30,
-            'text': 'bust',
-            'weight': 20
-            },
-        
-        {
             'use': score_after <= -30,
             'text': 'bust_pro',
             'weight': 40
@@ -245,6 +269,11 @@ def hit_bust(state):
             'use': dart == 'T20',
             'text': 'highest_bust',
             'weight': 70
+            },
+        {
+            'use': True,
+            'text': 'zonk',
+            'weight': 30
             },
 
         ]

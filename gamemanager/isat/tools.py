@@ -7,15 +7,22 @@ def rot13(s):
 '''
 Directory for generated sound files.
 '''
-text_dir = '../sounds/cached-mary'
-
+text_dir = '../sounds/' # base path
+tts_dir = 'cached-mary' # added for tts sounds
+wav_dir = '.'           # added for wave files
 
 '''
 Get the name of the audio file for given text id.
 
 '''
-def tts_filename(text_id):
-    return join(text_dir, "%s.wav" % text_id)
+def isat_filename(text_id, text_desc):
+    if type(text_desc) == tuple:
+        return join(text_dir, tts_dir, "%s.wav" % text_id)
+    elif type(text_desc) == str:
+        if text_desc.startswith('wav:'):
+            return join(text_dir, wav_dir, "%s.wav" % text_desc[4:])
+    raise Exception("Unknown text format: %s %r" % (text_id, text_desc))
+                       
 
 
 '''We prepare a list of texts for the single-dart hits (e.g., as
