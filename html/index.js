@@ -99,6 +99,8 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     $scope.predicate = 'p.started';
     $scope.chartUpdating = true; // chart is being updated (show loader)
     $scope.oldChartData = false; // We use this to only update the chart when something has actually changed.
+    $scope.debugging = false;
+    $scope.debugDartValue = 'T20';
 
     var history = {};
     history.type="LineChart";
@@ -254,6 +256,9 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     };
 
     $scope.updateChartRanking = function(replace) {
+	if (! $scope.chart.data.rows) {
+	     return;
+	}
 	if (replace) {
 	    $scope.chart.data.rows.pop();
 	}
@@ -385,6 +390,17 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 
     $scope.abortEditingDarts = function(p) {
 	p.editingLastDarts = false;
+    }
+
+    // For debugging...
+    $scope.onKeypress = function(ev) {
+	if (ev.which == 100) {
+	    $scope.debugging = ! $scope.debugging;
+	}
+    }
+
+    $scope.debugThrowDart = function() {
+	$scope.sock.send("cmd:debug-throw-dart " + $scope.debugDartValue); 
     }
 
 }).directive("clickToEditDarts", function() {

@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="css/font-awesome.min.css">
   </head>
 
-  <body ng-app="darts"  ng-controller="DartCtrl">
+  <body ng-app="darts"  ng-controller="DartCtrl" ng-keypress="onKeypress($event)">
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
       <div class="container">
         <div class="navbar-header">
@@ -141,7 +141,7 @@
 			 placeholder="XYZ" style="margin-top: 1em">
 		</div>
 		<div class="col-md-2">
-		  <input class="btn btn-primary" type="submit" value="add" style="margin-top: 1em;" ng-click="addPlayer()">
+		  <input class="btn btn-primary" type="submit" value="add" style="margin-top: 1em;" ng-click="addPlayer()" maxlength="3">
 		</div>
 	      </div>
 	      <div class="dropfrom" data-drop="true" ng-model="availablePlayers" jqyoui-droppable="{multiple:true, onDrop: 'sortAvailablePlayers'}">
@@ -176,6 +176,11 @@
 
       <img src="img/ajax-loader.gif" border="0" id="ajax-loader" ng-if="chartUpdating" />
       
+      <div id="debugbox" ng-hide="!debugging">
+	
+	<input class="form-control" type="text" value="S60" id="debugDartValue" maxlength="3" style="width: 4em; display: inline;" ng-model="debugDartValue">
+	<input class="btn btn-primary" type="submit" value="Throw dart" ng-click="debugThrowDart()" style="display: inline;"><br>
+      </div>
 
     </div><!-- /.container -->
 
