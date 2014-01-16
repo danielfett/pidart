@@ -312,6 +312,9 @@ class DartManager(Component):
         DartGame(one_game).register(self)
         DartsWebServer().register(self)
         Logger().register(self)
+        self.inputsys = None
+        self.soundsys = None
+        self.logsys = None
 
     def set_sound(self, soundsys):
         if self.soundsys:
@@ -330,7 +333,7 @@ class DartManager(Component):
         if self.inputsys:
             self.inputsys.unregister()
             self.inputsys = None
-        if device:
+        if path:
             self.inputsys = DartInput(path)
 
     '''

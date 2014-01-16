@@ -17,6 +17,7 @@ class DartInput(Component):
                baudrate = 115200, 
                bufsize = 1, 
                timeout = 0).register(self)
+        print "Reading from serial device %s" % device
         
     def read(self, data):
         for b in data:
