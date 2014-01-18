@@ -16,6 +16,23 @@ class SendState(Event):
 class SendInfo(Event):
     pass
 
+
+def sanitize_input_dart(dart):
+    inner = False
+    if dart[-1] == 'i':
+        inner = True
+        dart = dart[:-1]
+    dart = dart.upper()
+    # the following fails if len(dart) == 0:
+    if (dart[0] not in ['S', 'D', 'T']):
+        dart = 'S%s' % dart
+    # fails if dart not numeric:
+    if not 1 <= int(dart[1:]) <= 20:
+        raise ValueError("Dart's value should be above 0 and below 21.")
+    if inner and dart[0] == 'S':
+        dart = "%si" % dart
+    return dart
+
 class DartsWSServer(Component):
     channel = "wsserver"
 
@@ -26,25 +43,7 @@ class DartsWSServer(Component):
             'players': [], 
             'ranking': []
         }
-        self.knownSockets = []
-
-    @staticmethod
-    def sanitize_input_dart(dart):
-        inner = False
-        if dart[-1] == 'i':
-            inner = True
-            dart = dart[:-1]
-        dart = dart.upper()
-        # the following fails if len(dart) == 0:
-        if (dart[0] not in ['S', 'D', 'T']):
-            dart = 'S%s' % dart
-        # fails if dart not numeric:
-        if not 1 <= int(dart[1:]) <= 20:
-            raise ValueError("Dart's value should be above 0 and below 21.")
-        if inner and dart[0] == 'S':
-            dart = "%si" % dart
-        return dart
-            
+        self.knownSockets = []           
 
     def read(self, sock, data):
         if data == 'hello':
@@ -96,11 +95,11 @@ class DartsServerController(Component):
         self.fire(SendState(self.serialize_full(state)))
 
     @handler('GameInitialized')
-    def _send_info(self):
+    def _send_game_initialized(self, state):
         self.fire(SendInfo('game_initialized'))
 
     @handler('GameOver')
-    def _send_info(self):
+    def _send_game_over(self, state):
         self.fire(SendInfo('game_over'))
 
     @handler('Hit', 'HitBust', 'HitWinner')
@@ -139,11 +138,11 @@ class Root(Controller):
             self.fireEvent(StartGame(players, start, testgame))
         elif cmd == 'change-last-round':
             player = int(data['player'])
-            oldDarts = map(self.sanitize_input_dart, data['old_darts'])
-            newDarts = map(self.sanitize_input_dart, data['new_darts'])
+            oldDarts = map(sanitize_input_dart, data['old_darts'])
+            newDarts = map(sanitize_input_dart, data['new_darts'])
             self.fireEvent(ChangeLastRound(player, oldDarts, newDarts))
         elif cmd == 'debug-throw-dart':
-            dart = self.sanitize_input_dart(data['dart'])
+            dart = sanitize_input_dart(data['dart'])
             self.fireEvent(ReceiveInput('code', dart))
         elif cmd == 'debug-next-player':
             self.fireEvent(ReceiveInput('generic', 'next_player'))

@@ -179,6 +179,10 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	    if (typeof(message.state.ranking) !== 'undefined') {
 		$scope.updateChartRanking(true);
 	    }
+
+	    if ($scope.state.state == 'null') {
+		$('a[href="#newgame"]').trigger('click');
+	    }
 	    
 	    $scope.$apply();
 	    fitText();
