@@ -75,6 +75,7 @@
 	<li><a href="#order" data-toggle="tab">Order</a></li>
 	<li><a href="#stats" data-toggle="tab">Dartenbank Score</a></li>
 	<li><a href="#newgame" data-toggle="tab">New Game</a></li>
+	<li><a href="#settings" data-toggle="tab">Settings</a></li>
       </ul>
 
       <!-- Tab panes -->
@@ -177,17 +178,20 @@
 	</div>
       </div>
 
-      <img src="img/ajax-loader.gif" border="0" id="ajax-loader" ng-if="chartUpdating" />
-      
-      <div id="debugbox" ng-hide="!debugging">
-	
-	<input class="form-control" type="text" value="S60" id="debugDartValue" maxlength="3" style="width: 4em; display: inline;" ng-model="debugDartValue">
-	<input class="btn btn-primary" type="submit" value="Throw dart" ng-click="debugThrowDart()" style="display: inline;"><br>
-	<input class="btn btn-primary" type="submit" value="Next player" ng-click="debugNextPlayer()"><br>
+      <div class="tab-pane" id="settings">
+	test
       </div>
 
     </div><!-- /.container -->
 
+    <img src="img/ajax-loader.gif" border="0" id="ajax-loader" ng-if="chartUpdating" />
+    
+    <div id="debugbox" ng-hide="!debugging">
+      
+      <input class="form-control" type="text" value="S60" id="debugDartValue" maxlength="3" style="width: 4em; display: inline;" ng-model="debugDartValue">
+      <input class="btn btn-primary" type="submit" value="Throw dart" ng-click="debugThrowDart()" style="display: inline;"><br>
+      <input class="btn btn-primary" type="submit" value="Next player" ng-click="debugNextPlayer()"><br>
+    </div>
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
