@@ -8,7 +8,7 @@ from circuits.web.tools import check_auth, basic_auth
  
 import simplejson
 
-from events import ReceiveInput, SkipPlayer, StartGame, ChangeLastRound
+from events import ReceiveInput, SkipPlayer, StartGame, ChangeLastRound, SetConfig
 
 class SendState(Event):
     pass
@@ -141,6 +141,13 @@ class Root(Controller):
             oldDarts = map(sanitize_input_dart, data['old_darts'])
             newDarts = map(sanitize_input_dart, data['new_darts'])
             self.fireEvent(ChangeLastRound(player, oldDarts, newDarts))
+        elif cmd == 'apply-settings':
+            if 'sound' in data:
+                self.fireEvent(SetConfig('sound', data['sound']))
+            if 'input' in data:
+                self.fireEvent(SetConfig('input_device', data['input']))
+            if 'logging' in data:
+                self.fireEvent(SetConfig('logging', data['logging']))
         elif cmd == 'debug-throw-dart':
             dart = sanitize_input_dart(data['dart'])
             self.fireEvent(ReceiveInput('code', dart))

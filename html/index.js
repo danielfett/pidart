@@ -219,14 +219,18 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	for (var i = 0; i < $scope.selectedPlayers.length; i ++) {
 	    players.push($scope.selectedPlayers[i].name);
 	}
-	if (! confirm("Is this order correct?\n" + players.join(', '))) {
+	var testing = '';
+	if ($scope.setTesting) {
+	    testing = '\n\nThis is a *TEST* game (no logging enabled in settings).';
+	}
+	if (! confirm("Is this order correct?\n" + players.join(', ') + testing)) {
 	    return;
 	}
 	postxhr({
 	    command: 'new-game',
 	    players: players,
 	    startvalue: $scope.initialValue,
-	    testgame: false
+	    testgame: $scope.setTesting
 	});
     };
 
@@ -438,6 +442,15 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	postxhr({
 	    command: 'debug-next-player',
 	    dart: $scope.debugDartValue
+	});
+    }
+
+    $scope.applySettings = function () {
+	postxhr({
+	    command: 'apply-settings',
+	    sound: $scope.setSound,
+	    input: $scope.setInputDevice,
+	    logging: ! $scope.setTesting
 	});
     }
 
