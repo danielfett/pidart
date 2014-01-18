@@ -79,6 +79,29 @@ var eloEngine = new function(){
 
 };
 
+function postxhr(data, onsuccess) {
+    $.post('xhr', JSON.stringify(data))
+    .done(function(data) {
+	d = JSON.parse(data);
+	if (! d.success) {
+	    alert('Unable to execute command: ' + data);
+	}
+	if (onsuccess) {
+	    onsuccess(d);
+	}
+    })
+    .fail(function(xhr, text, error) {
+	alert('Unable to execute command: ' + text + ' - ' + error);
+    });
+}
+
+function get(a, b) {
+    if (typeof(a) === 'undefined') {
+	return b;
+    }
+    return a;
+}
+        
 
 $(window).resize(function() {
     fitText()
@@ -101,6 +124,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     $scope.oldChartData = false; // We use this to only update the chart when something has actually changed.
     $scope.debugging = false;
     $scope.debugDartValue = 'T20';
+    $scope.firstChartUpdateTriggered = false;
 
     var history = {};
     history.type="LineChart";
@@ -148,39 +172,33 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 
     $scope.sock.onmessage = function(e) {
 	console.log("Got message: " + e.data);
-	function get(a, b) {
-	    if (typeof(a) === 'undefined') {
-		return b;
+	var message = JSON.parse(e.data);
+	if (message.type == 'state') {
+	    $scope.state = $.extend($scope.state, message.state);
+	    
+	    if (typeof(message.state.ranking) !== 'undefined') {
+		$scope.updateChartRanking(true);
 	    }
-	    return a;
+	    
+	    $scope.$apply();
+	    fitText();
+	    if (! $scope.firstChartUpdateTriggered) {
+		$scope.updateChartFull();
+	    }
 	}
-	var newState = JSON.parse(e.data);
-	var oldPlayers = get($scope.state.players, []).join();
-	var newPlayers = get(newState.players, []).join();
-	var oldStateState = get($scope.state.state, '');
-	var newStateState = get(newState.state.state, '');
-
-	$scope.state = $.extend($scope.state, newState);
-
-	if (oldPlayers != newPlayers) {
-	    $scope.updateChartFull();
-	} else if (typeof(newState.ranking) !== 'undefined') {
-	    $scope.updateChartRanking(true);
-	}
-
-	if (newStateState != oldStateState) {
-	    if (newStateState == 'playing' && oldStateState != 'hold') {
-		console.debug("Oldstate was " + oldStateState);
+	else if (message.type == 'info') {
+	    if (message.info == 'game_initialized') {
+		$scope.updateChartFull();
 		$('a[href="#order"]').trigger('click');
 	    }
 	}
-
-	$scope.$apply();
-	fitText();
     }
 
     $scope.skipPlayer = function(player) {
-	$scope.sock.send("cmd:skip-player " + player);
+	postxhr({
+	    command: 'skip-player',
+	    player: player
+	});
     }
 
     $scope.newGame = function() {
@@ -200,10 +218,19 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	if (! confirm("Is this order correct?\n" + players.join(', '))) {
 	    return;
 	}
-	$scope.sock.send("cmd:new-game " + players.join(',') + " " + $scope.initialValue);
+	postxhr({
+	    command: 'new-game',
+	    players: players,
+	    startvalue: $scope.initialValue,
+	    testgame: false
+	});
     };
 
     $scope.updateChartFull = function() {
+	if (! $scope.state.players) {
+	    return;
+	}
+	$scope.firstChartUpdateTriggered = true;
 	$scope.chartUpdating = true;
 	$.ajax('http://infsec.uni-trier.de/dartenbank/rpc/elo.php?count=30', {
 	    dataType: 'JSON'
@@ -376,16 +403,13 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	    alert('Please adhere to the following format: ^[SDT]?(1?[0-9]|20)i?( [SDT]?(1?[0-9]|20)i?){0,2}$');
 	    return;
 	}
-	$scope.sock.send(
-	    'cmd:change-last-round '
-		+ p.started
-		+ ' '
-		+ p.last_frame.darts.join(',')
-		+ ' '
-		+ input.replace(/ /g, ',')
-	);
-	p.editingLastDarts = false;
-	return;
+	postxhr({
+	    player: p.started,
+	    old_darts: p.last_frame.darts,
+	    new_darts: input.split(' ')
+	}, function(data) {
+	    p.editingLastDarts = false;
+	});
     }
 
     $scope.abortEditingDarts = function(p) {
@@ -400,11 +424,17 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     }
 
     $scope.debugThrowDart = function() {
-	$scope.sock.send("cmd:debug-throw-dart " + $scope.debugDartValue); 
+	postxhr({
+	    command: 'debug-throw-dart',
+	    dart: $scope.debugDartValue
+	});
     }
 
     $scope.debugNextPlayer = function() {
-	$scope.sock.send("cmd:debug-next-player"); 
+	postxhr({
+	    command: 'debug-next-player',
+	    dart: $scope.debugDartValue
+	});
     }
 
 }).directive("clickToEditDarts", function() {
@@ -443,13 +473,17 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 		return darts.join(' ');
 	    }
 
-	    $scope.saveDarts = function(input) {
+	    /*$scope.saveDarts = function(input) {
 		if (! /^[SDT]?(1?[0-9]|20)( [SDT]?(1?[0-9]|20)){0,2}$/.test(input)) {
 		    return false;
 		}
-		$scope.sock.send('cmd:change-last-round ' + $scope.player + ' ' + input.replace(/ /g, ','));
+		postxhr({
+		    command: 'change-last-round',
+		    player: $scope.player,
+		    new_darts: input.replace(/ /g, ','));
+		       });
 		return true;
-	    }
+	    }*/
 
 	    $scope.disableEditor = function() {
 		$scope.view.editorEnabled = false;

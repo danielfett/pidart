@@ -4,7 +4,7 @@ from circuits import Component, Event, handler
 from circuits.web.dispatchers import WebSockets
 from circuits.web import Server, Controller, Logger, Static
 from circuits.net.sockets import write, connect
-#from circuits.web.tools import check_auth, basic_auth
+from circuits.web.tools import check_auth, basic_auth
  
 import simplejson
 
@@ -13,16 +13,19 @@ from events import ReceiveInput, SkipPlayer, StartGame, ChangeLastRound
 class SendState(Event):
     pass
 
+class SendInfo(Event):
+    pass
+
 class DartsWSServer(Component):
     channel = "wsserver"
 
     def __init__(self):
         Component.__init__(self)
-        self.connectMessage = {
+        self.connectState = {
             'state': 'null', 
             'players': [], 
             'ranking': []
-            }
+        }
         self.knownSockets = []
 
     @staticmethod
@@ -45,38 +48,32 @@ class DartsWSServer(Component):
 
     def read(self, sock, data):
         if data == 'hello':
-            msg_json = simplejson.dumps(self.connectMessage)
+            msg_json = simplejson.dumps({
+                'type': 'state',
+                'state': self.connectState
+            })
             self.fireEvent(write(sock, msg_json))
             self.knownSockets.append(sock)
-        elif data.startswith('cmd:'):
-            try:
-                pars = data.split(' ')
-                if pars[0] == 'cmd:skip-player':
-                    self.fireEvent(SkipPlayer(int(pars[1])))
-                elif pars[0] == 'cmd:new-game':
-                    players = pars[1].split(',')
-                    self.fireEvent(StartGame(players, int(pars[2]), False));
-                elif pars[0] == 'cmd:change-last-round':
-                    player = int(pars[1])
-                    oldDarts = map(self.sanitize_input_dart, pars[2].split(','))
-                    newDarts = map(self.sanitize_input_dart, pars[3].split(','))
-                    self.fireEvent(ChangeLastRound(player, oldDarts, newDarts))
-                elif pars[0] == 'cmd:debug-throw-dart':
-                    dart = self.sanitize_input_dart(pars[1])
-                    self.fireEvent(ReceiveInput('code', dart))
-                elif pars[0] == 'cmd:debug-next-player':
-                    self.fireEvent(ReceiveInput('generic', 'next_player'))
-            except Exception, e:
-                print "Exception when parsing command '%s':" % data
-                print e
                 
-
-    @handler('SendState')
-    def SendState(self, msg):
-        msg_json = simplejson.dumps(msg)
+    @handler('SendInfo')
+    def SendInfo(self, info):
+        msg_json = simplejson.dumps({
+            'type': 'info',
+            'info': info
+        })
         for s in self.knownSockets:
             self.fireEvent(write(s, msg_json))
-        self.connectMessage.update(msg)
+            
+
+    @handler('SendState')
+    def SendState(self, state):
+        msg_json = simplejson.dumps({
+            'type': 'state',
+            'state': state
+        })
+        for s in self.knownSockets:
+            self.fireEvent(write(s, msg_json))
+        self.connectState.update(state)
 
 
 class DartsServerController(Component):
@@ -98,6 +95,14 @@ class DartsServerController(Component):
     def _send_full_state(self, state):
         self.fire(SendState(self.serialize_full(state)))
 
+    @handler('GameInitialized')
+    def _send_info(self):
+        self.fire(SendInfo('game_initialized'))
+
+    @handler('GameOver')
+    def _send_info(self):
+        self.fire(SendInfo('game_over'))
+
     @handler('Hit', 'HitBust', 'HitWinner')
     def _send_short_state(self, state, *args):
         self.fire(SendState(self.serialize_short(state)))
@@ -111,17 +116,38 @@ class Root(Controller):
 
     def index(self):
         return 
-    '''
-    def protected(self):
-        realm = "Test"
-        users = {"admin": "admin"}
+
+    def xhr(self, *args, **kwargs):
+        realm = "eDarts"
+        users = {"admin": "adminx"}
         encrypt = str
 
-        if check_auth(self.request, self.response, realm, users, encrypt):
-            return "Hello %s" % self.request.login
+        if not check_auth(self.request, self.response, realm, users, encrypt):
+            return basic_auth(self.request, self.response, realm, users, encrypt)
 
-        return basic_auth(self.request, self.response, realm, users, encrypt)
-    '''
+        if self.request.method != 'POST':
+            return simplejson.dumps({'error':"Only method POST is allowed."})
+            
+        data = simplejson.loads(self.request.body.read())
+        cmd = data['command']
+        if cmd == 'skip-player':
+            self.fireEvent(SkipPlayer(int(data['player'])))
+        elif cmd == 'new-game':
+            players = data['players']
+            start = int(data['startvalue'])
+            testgame = data['testgame']
+            self.fireEvent(StartGame(players, start, testgame))
+        elif cmd == 'change-last-round':
+            player = int(data['player'])
+            oldDarts = map(self.sanitize_input_dart, data['old_darts'])
+            newDarts = map(self.sanitize_input_dart, data['new_darts'])
+            self.fireEvent(ChangeLastRound(player, oldDarts, newDarts))
+        elif cmd == 'debug-throw-dart':
+            dart = self.sanitize_input_dart(data['dart'])
+            self.fireEvent(ReceiveInput('code', dart))
+        elif cmd == 'debug-next-player':
+            self.fireEvent(ReceiveInput('generic', 'next_player'))
+        return simplejson.dumps({'success': True})
 
 class DartsWebServer(Server):
     def __init__(self):
