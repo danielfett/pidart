@@ -61,6 +61,11 @@ class DartsWSServer(Component):
                     oldDarts = map(self.sanitize_input_dart, pars[2].split(','))
                     newDarts = map(self.sanitize_input_dart, pars[3].split(','))
                     self.fireEvent(ChangeLastRound(player, oldDarts, newDarts))
+                elif pars[0] == 'cmd:debug-throw-dart':
+                    dart = self.sanitize_input_dart(pars[1])
+                    self.fireEvent(ReceiveInput('code', dart))
+                elif pars[0] == 'cmd:debug-next-player':
+                    self.fireEvent(ReceiveInput('generic', 'next_player'))
             except Exception, e:
                 print "Exception when parsing command '%s':" % data
                 print e

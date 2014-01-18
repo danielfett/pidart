@@ -103,7 +103,7 @@
 		</td>
 		<td>{{p.rank + 1}}</td>
 		<td class="large-entry">{{p.name}}</td>
-		<td>
+		<td ng-if="p.frames > 0">
 		  <span ng-repeat="dart in p.last_frame.darts track by $index" class="dart" ng-if="! p.editingLastDarts">
 		    <span class="dart" ng-class="formatDartClass(dart)">{{formatDart(dart)}}</span> 
 		  </span>
@@ -115,6 +115,9 @@
 		    <a href="" ng-click="saveDarts(p)"><i class="fa fa-check"></i></a>
 		    <a href="" ng-click="abortEditingDarts(p)"><i class="fa fa-times"></i></a>
 		  </span>
+		</td>
+		<td ng-if="p.frames == 0">
+		  -
 		</td>
 		<td class="large-entry">{{p.score}}</td>
 		<td>{{p.frames}}</td>
@@ -180,6 +183,7 @@
 	
 	<input class="form-control" type="text" value="S60" id="debugDartValue" maxlength="3" style="width: 4em; display: inline;" ng-model="debugDartValue">
 	<input class="btn btn-primary" type="submit" value="Throw dart" ng-click="debugThrowDart()" style="display: inline;"><br>
+	<input class="btn btn-primary" type="submit" value="Next player" ng-click="debugNextPlayer()"><br>
       </div>
 
     </div><!-- /.container -->

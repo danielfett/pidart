@@ -403,6 +403,10 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	$scope.sock.send("cmd:debug-throw-dart " + $scope.debugDartValue); 
     }
 
+    $scope.debugNextPlayer = function() {
+	$scope.sock.send("cmd:debug-next-player"); 
+    }
+
 }).directive("clickToEditDarts", function() {
     var editorTemplate = '<div class="click-to-edit">' +
 	'<div ng-hide="view.editorEnabled">' +
