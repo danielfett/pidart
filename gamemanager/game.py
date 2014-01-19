@@ -316,18 +316,22 @@ class DartManager(Component):
         self.soundsys = None
         self.logsys = None
 
-    def set_sound(self, soundsys):
-        if self.soundsys:
+    def set_sound(self, newsnd):
+        if self.soundsys != None:
+            print "unregistering old soundsys"
             self.soundsys.unregister()
             self.soundsys = None
-        if soundsys == 'isat':
+        else:
+            print "no old soundsys"
+        if newsnd == 'isat':
             self.soundsys = ISATSounds()
-        elif soundsys == 'espeak':
+        elif newsnd == 'espeak':
             self.soundsys = EspeakSounds()
-        elif soundsys == 'legacy':
+        elif newsnd == 'legacy':
             self.soundsys = LegacySounds()
         if self.soundsys != None:
             self.soundsys.register(self)
+            self.fireEvent(SettingsChanged({'sound': newsnd}))
     
     def set_input_device(self, path):
         if self.inputsys:
@@ -335,6 +339,7 @@ class DartManager(Component):
             self.inputsys = None
         if path:
             self.inputsys = DartInput(path)
+            self.fireEvent(SettingsChanged({'inputDevice': path}))
 
     '''
     File input unregisters itself once it has finished.
@@ -352,19 +357,19 @@ class DartManager(Component):
         else:
             if self.logsys:
                 self.logsys.unregister()
+        self.fireEvent(SettingsChanged({'logging': (enable == True)}))
 
-    @handler('SetConfig')
-    def handle_set_config(self, name, *args):
-        if name == 'sound':
-            self.set_sound(*args)
-        elif name == 'input_device':
-            self.set_input_device(*args)
-        elif name == 'input_file':
-            self.set_input_file(*args)
-        elif name == 'logging':
-            self.set_logging(*args)
+    @handler('UpdateSettings')
+    def handle_set_config(self, config):
+        if 'sound' in config:
+            self.set_sound(config['sound'])
+        if 'inputDevice' in config:
+            self.set_input_device(config['inputDevice'])
+        if 'inputFile' in config:
+            self.set_input_file(config['inputFile'])
+        if 'logging' in config:
+            self.set_logging(config['logging'])
             
-    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Start a dart game.')
@@ -374,9 +379,9 @@ if __name__ == "__main__":
                         help="initial number of points")
     parser.add_argument('--snd', default='legacy',
                         help="sound system (none/isat/legacy/espeak)")
-    parser.add_argument('--dev', default='/dev/ttyUSB0', 
-                        help="input USB device (use none for no USB input)")
-    parser.add_argument('--file', help="Read input from this file.")
+    parser.add_argument('--dev', default='', 
+                        help="input USB device (use empty string for no serial input)")
+    parser.add_argument('--file', help="Read input from this file.", default='')
     parser.add_argument('--debug', action='store_true', help="Enable debug output")
     parser.add_argument('--nolog', action='store_true', help="Disable single-dart logging")
     parser.add_argument('--test', action='store_true', help="This is a test game, do no permanent changes.")
@@ -385,14 +390,15 @@ if __name__ == "__main__":
 
     m = DartManager(args.one_game)
 
-    if args.file:
-        m.fire(SetConfig('input_file', args.file))
-    if args.dev != 'none':
-        m.fire(SetConfig('input_device', args.dev))
+    settings = {
+        'sound': args.snd,
+        'inputDevice': args.dev,
+        'inputFile': args.file,
+    }
     if args.debug:
         m += Debugger(IgnoreChannels = ['web'])
-
-    m.fire(SetConfig('sound', args.snd))
+    
+    m.fire(UpdateSettings(settings))
 
     if len(args.players):
         m.fire(StartGame(args.players, args.init, args.test))

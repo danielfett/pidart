@@ -101,7 +101,7 @@ function get(a, b) {
     }
     return a;
 }
-        
+
 
 $(window).resize(function() {
     fitText()
@@ -125,6 +125,11 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     $scope.debugging = false;
     $scope.debugDartValue = 'T20';
     $scope.firstChartUpdateTriggered = false;
+    $scope.settings = {
+	sound: 'espeak',
+	inputDevice: '',
+	logging: false
+    }
 
     var history = {};
     history.type="LineChart";
@@ -175,7 +180,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	var message = JSON.parse(e.data);
 	if (message.type == 'state') {
 	    $scope.state = $.extend($scope.state, message.state);
-	    
+
 	    if (typeof(message.state.ranking) !== 'undefined') {
 		$scope.updateChartRanking(true);
 	    }
@@ -183,18 +188,20 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	    if ($scope.state.state == 'null') {
 		$('a[href="#newgame"]').trigger('click');
 	    }
-	    
+
 	    $scope.$apply();
 	    fitText();
 	    if (! $scope.firstChartUpdateTriggered) {
 		$scope.updateChartFull();
 	    }
-	}
-	else if (message.type == 'info') {
+	} else if (message.type == 'info') {
 	    if (message.info == 'game_initialized') {
 		$scope.updateChartFull();
 		$('a[href="#order"]').trigger('click');
 	    }
+	} else if (message.type == 'settings') {
+	    $.extend($scope.settings, message.settings);
+	    $scope.$apply();
 	}
     }
 
@@ -220,7 +227,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	    players.push($scope.selectedPlayers[i].name);
 	}
 	var testing = '';
-	if ($scope.setTesting) {
+	if (! $scope.settings.logging) {
 	    testing = '\n\nThis is a *TEST* game (no logging enabled in settings).';
 	}
 	if (! confirm("Is this order correct?\n" + players.join(', ') + testing)) {
@@ -230,7 +237,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	    command: 'new-game',
 	    players: players,
 	    startvalue: $scope.initialValue,
-	    testgame: $scope.setTesting
+	    testgame: ! $scope.settings.logging
 	});
     };
 
@@ -448,9 +455,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     $scope.applySettings = function () {
 	postxhr({
 	    command: 'apply-settings',
-	    sound: $scope.setSound,
-	    input: $scope.setInputDevice,
-	    logging: ! $scope.setTesting
+	    settings: $scope.settings
 	});
     }
 

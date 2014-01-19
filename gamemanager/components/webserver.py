@@ -8,12 +8,15 @@ from circuits.web.tools import check_auth, basic_auth
  
 import simplejson
 
-from events import ReceiveInput, SkipPlayer, StartGame, ChangeLastRound, SetConfig
+from events import ReceiveInput, SkipPlayer, StartGame, ChangeLastRound, UpdateSettings
 
 class SendState(Event):
     pass
 
 class SendInfo(Event):
+    pass
+
+class SendSettings(Event):
     pass
 
 
@@ -43,36 +46,48 @@ class DartsWSServer(Component):
             'players': [], 
             'ranking': []
         }
+        self.connectSettings = {}
         self.knownSockets = []           
 
     def read(self, sock, data):
         if data == 'hello':
-            msg_json = simplejson.dumps({
+            self.send_json({
                 'type': 'state',
                 'state': self.connectState
-            })
-            self.fireEvent(write(sock, msg_json))
+            }, sock)
+            self.send_json({
+                'type': 'settings',
+                'settings': self.connectSettings
+            }, sock)
             self.knownSockets.append(sock)
+
+    def send_json(self, msg, receiver = None):
+        msg = simplejson.dumps(msg)
+        for s in [receiver] if receiver else self.knownSockets:
+            self.fireEvent(write(s, msg))
                 
     @handler('SendInfo')
     def SendInfo(self, info):
-        msg_json = simplejson.dumps({
+        self.send_json({
             'type': 'info',
             'info': info
         })
-        for s in self.knownSockets:
-            self.fireEvent(write(s, msg_json))
-            
 
     @handler('SendState')
     def SendState(self, state):
-        msg_json = simplejson.dumps({
+        self.send_json({
             'type': 'state',
             'state': state
         })
-        for s in self.knownSockets:
-            self.fireEvent(write(s, msg_json))
         self.connectState.update(state)
+
+    @handler('SendSettings')
+    def SendSettings(self, settings):
+        self.send_json({
+            'type': 'settings',
+            'settings': settings
+        })
+        self.connectSettings.update(settings)
 
 
 class DartsServerController(Component):
@@ -110,6 +125,10 @@ class DartsServerController(Component):
     def _send_only_state(self, state, *args):
         self.fire(SendState({'state': state.state}))
 
+    @handler('SettingsChanged')
+    def _send_settings(self, settings):
+        self.fire(SendSettings(settings))
+
 
 class Root(Controller):
 
@@ -142,12 +161,7 @@ class Root(Controller):
             newDarts = map(sanitize_input_dart, data['new_darts'])
             self.fireEvent(ChangeLastRound(player, oldDarts, newDarts))
         elif cmd == 'apply-settings':
-            if 'sound' in data:
-                self.fireEvent(SetConfig('sound', data['sound']))
-            if 'input' in data:
-                self.fireEvent(SetConfig('input_device', data['input']))
-            if 'logging' in data:
-                self.fireEvent(SetConfig('logging', data['logging']))
+            self.fireEvent(UpdateSettings(data['settings']))
         elif cmd == 'debug-throw-dart':
             dart = sanitize_input_dart(data['dart'])
             self.fireEvent(ReceiveInput('code', dart))

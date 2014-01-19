@@ -51,5 +51,8 @@ class ChangeLastRound(Event):
 class GameStateChanged(Event):
     """ Something (general) in the player's history changed. """
 
-class SetConfig(Event):
+class UpdateSettings(Event):
     """ Set come config """
+
+class SettingsChanged(Event):
+    """ Something in the config has changed, new config is attached. """
