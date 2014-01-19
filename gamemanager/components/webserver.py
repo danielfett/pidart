@@ -167,6 +167,7 @@ class Root(Controller):
             self.fireEvent(ReceiveInput('code', dart))
         elif cmd == 'debug-next-player':
             self.fireEvent(ReceiveInput('generic', 'next_player'))
+
         return simplejson.dumps({'success': True})
 
 class DartsWebServer(Server):

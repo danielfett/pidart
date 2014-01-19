@@ -312,6 +312,7 @@ class DartManager(Component):
         DartGame(one_game).register(self)
         DartsWebServer().register(self)
         Logger().register(self)
+        DetailedLogger().register(self)
         self.inputsys = None
         self.soundsys = None
         self.logsys = None
@@ -348,7 +349,7 @@ class DartManager(Component):
         if path:
             fi = FileInput(path)
             fi.register(self)
-
+    '''
     def set_logging(self, enable):
         if enable:
             if not self.logsys:
@@ -358,7 +359,7 @@ class DartManager(Component):
             if self.logsys:
                 self.logsys.unregister()
         self.fireEvent(SettingsChanged({'logging': (enable == True)}))
-
+    '''
     @handler('UpdateSettings')
     def handle_set_config(self, config):
         if 'sound' in config:
@@ -367,8 +368,8 @@ class DartManager(Component):
             self.set_input_device(config['inputDevice'])
         if 'inputFile' in config:
             self.set_input_file(config['inputFile'])
-        if 'logging' in config:
-            self.set_logging(config['logging'])
+        #if 'logging' in config:
+        #    self.set_logging(config['logging'])
             
 
 if __name__ == "__main__":
@@ -394,6 +395,7 @@ if __name__ == "__main__":
         'sound': args.snd,
         'inputDevice': args.dev,
         'inputFile': args.file,
+        'logging': True
     }
     if args.debug:
         m += Debugger(IgnoreChannels = ['web'])

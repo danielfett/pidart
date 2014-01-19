@@ -9,6 +9,7 @@ class EspeakSounds(Component):
     def __init__(self):
         super(EspeakSounds, self).__init__()
         espeak.set_voice('en/en-sc')
+        self.say("Ready.")
 
     def say(self, text):
         espeak.synth("%s!" % text)

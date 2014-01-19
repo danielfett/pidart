@@ -36,6 +36,7 @@ text then. Did you know that EMACS has a macro called 'rot13-region'?
 '''
 texts = {
     # texts for general usage
+    'ready': ('Ready.', 'pleased'),
     'next_player': ('Next player.', 'pleased'),
     'press_start': ('Remove darts!', 'pleased'),
     'good_choice': ('Excellent choice', 'pleased'),

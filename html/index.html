@@ -221,10 +221,14 @@
     <img src="img/ajax-loader.gif" border="0" id="ajax-loader" ng-if="chartUpdating" />
     
     <div id="debugbox" ng-hide="!debugging">
-      
-      <input class="form-control" type="text" value="S60" id="debugDartValue" maxlength="3" style="width: 4em; display: inline;" ng-model="debugDartValue">
-      <input class="btn btn-primary" type="submit" value="Throw dart" ng-click="debugThrowDart()" style="display: inline;"><br>
-      <input class="btn btn-primary" type="submit" value="Next player" ng-click="debugNextPlayer()"><br>
+      <h4>Debugging</h4>
+      <div class="form-group">
+	<input class="form-control" type="text" value="S60" id="debugDartValue" maxlength="3" style="width: 4em; display: inline;" ng-model="debugDartValue">
+	<input class="btn btn-primary" type="submit" value="Throw dart" ng-click="debugThrowDart()" style="display: inline;">
+      </div>
+      <div class="form-group">
+	<input class="btn btn-primary" type="submit" value="Next player" ng-click="debugNextPlayer()"><br>
+      </div>
     </div>
 
     <!-- Bootstrap core JavaScript

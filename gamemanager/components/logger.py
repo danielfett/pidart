@@ -54,6 +54,8 @@ class DetailedLogger(Component):
         self.conn.commit()
     
     def GameInitialized(self, state):
+        if state.testgame:
+            return
         args = (
             state.id,
             state.startvalue
@@ -64,6 +66,8 @@ class DetailedLogger(Component):
 
     @handler('Hit', priority=-1)
     def Hit(self, state, code):
+        if state.testgame:
+            return
         args = (
             state.id,
             state.currentPlayer.name,

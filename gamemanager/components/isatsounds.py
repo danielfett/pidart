@@ -45,6 +45,7 @@ class ISATSounds(Component):
         if silent:
             for id, _ in texts.items():
                 self.sounds_tts[id].set_volume(0)
+        self._say('ready')
 
     def _play(self, sound):
         while pygame.mixer.get_busy():

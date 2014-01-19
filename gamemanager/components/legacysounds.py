@@ -22,6 +22,8 @@ class LegacySounds(Component):
         self.sounds = {}
         for n in self.SOUNDS:
             self.sounds[n] = pygame.mixer.Sound('../sounds/old-%s.wav' % n)
+        self.play('beep')
+        self.play('beep')
     
     def play(self, sound):
         self.sounds[sound].play() 

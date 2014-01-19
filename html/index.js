@@ -128,7 +128,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     $scope.settings = {
 	sound: 'espeak',
 	inputDevice: '',
-	logging: false
+	logging: true
     }
 
     var history = {};
