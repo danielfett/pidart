@@ -54,3 +54,11 @@ used. To generate the sound files from the rules file, use
 
 in the gamemanager directory.
 
+
+Installation on a Raspberry Pi
+==============================
+
+sudo apt-get install python-dev python-espeak sox mercurial
+hg clone https://bitbucket.org/webhamster/circuits-dev
+cd circuits-dev
+sudo python setup.py install

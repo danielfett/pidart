@@ -1,6 +1,7 @@
 from .rules import texts
 from .tools import isat_filename, rot13
 from subprocess import Popen, PIPE
+import argparse
 import sys
 
 '''
