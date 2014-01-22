@@ -43,7 +43,7 @@ Generate cached voices.
 '''
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generates a cache of rendered TTS audio files for later usage. Automatically caches all texts in the rules.py file. Needs a MaryTTS server for generating the audio and SOX must be installed to convert the audio files.')
-    parser.add_argument('server', metavar='server_url', type=str, help='MaryTTS web server URL', default='http://localhost:59125/process')
+    parser.add_argument('server', metavar='server_url', type=str, help='MaryTTS web server URL, e.g. http://localhost:59125/process', default='http://localhost:59125/process')
     args = parser.parse_args()
     from urllib import urlencode
     from urllib2 import Request, urlopen, HTTPError
