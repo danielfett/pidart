@@ -79,7 +79,7 @@ class DartsWSServer(Component):
             'info': info
         })
 
-    @handler('SendState')
+    @handler('SendState', priority=1)
     def SendState(self, state):
         self.send_json({
             'type': 'state',
@@ -123,7 +123,7 @@ class DartsServerController(Component):
     def _send_game_over(self, state):
         self.fire(SendInfo('game_over'))
 
-    @handler('Hit', 'HitBust', 'HitWinner')
+    @handler('Hit', 'HitBust', 'HitWinner', priority=1)
     def _send_short_state(self, state, *args):
         self.fire(SendState(self.serialize_short(state)))
 
