@@ -84,14 +84,14 @@ function postxhr(data, onsuccess) {
     .done(function(data) {
 	d = JSON.parse(data);
 	if (! d.success) {
-	    alert('Unable to execute command: ' + data);
+	    console.error('Unable to execute command: ' + data);
 	}
 	if (onsuccess) {
 	    onsuccess(d);
 	}
     })
     .fail(function(xhr, text, error) {
-	alert('Unable to execute command: ' + text + ' - ' + error);
+	console.error('Unable to execute command: ' + text + ' - ' + error);
     });
 }
 
@@ -130,6 +130,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	inputDevice: '',
 	logging: true
     }
+    $scope.serverID = null;
 
     var history = {};
     history.type="LineChart";
@@ -202,6 +203,14 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	} else if (message.type == 'settings') {
 	    $.extend($scope.settings, message.settings);
 	    $scope.$apply();
+	} else if (message.type == 'version') {
+	    if ($scope.serverID === null) {
+		$scope.serverID = message.version;
+	    } else {
+		if ($scope.serverID != message.version) {
+		    window.location.reload();
+		}
+	    }
 	}
     }
 
@@ -293,7 +302,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	    })
 	    .fail(function(xhr, status, error) {
 		$scope.chartUpdating = false;
-		alert("Error updating chart from Dartenbank: " + error);
+		console.error("Error updating chart from Dartenbank: " + error);
 	    });
     };
 
@@ -456,6 +465,12 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	postxhr({
 	    command: 'apply-settings',
 	    settings: $scope.settings
+	});
+    }
+
+    $scope.debugPerformSelfUpdate = function () {
+	postxhr({
+	    command: 'perform-self-update'
 	});
     }
 

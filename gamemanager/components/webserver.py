@@ -5,10 +5,11 @@ from circuits.web.dispatchers import WebSockets
 from circuits.web import Server, Controller, Logger, Static
 from circuits.net.sockets import write, connect
 from circuits.web.tools import check_auth, basic_auth
+from random import random
  
 import simplejson
 
-from events import ReceiveInput, SkipPlayer, StartGame, ChangeLastRound, UpdateSettings
+from events import ReceiveInput, SkipPlayer, StartGame, ChangeLastRound, UpdateSettings, PerformSelfUpdate
 
 class SendState(Event):
     pass
@@ -47,10 +48,15 @@ class DartsWSServer(Component):
             'ranking': []
         }
         self.connectSettings = {}
-        self.knownSockets = []           
+        self.knownSockets = []  
+        self.random_id = random()
 
     def read(self, sock, data):
         if data == 'hello':
+            self.send_json({
+                'type': 'version',
+                'version': self.random_id
+            }, sock)
             self.send_json({
                 'type': 'state',
                 'state': self.connectState
@@ -167,6 +173,8 @@ class Root(Controller):
             self.fireEvent(ReceiveInput('code', dart))
         elif cmd == 'debug-next-player':
             self.fireEvent(ReceiveInput('generic', 'next_player'))
+        elif cmd == 'perform-self-update':
+            self.fire(PerformSelfUpdate())
 
         return simplejson.dumps({'success': True})
 

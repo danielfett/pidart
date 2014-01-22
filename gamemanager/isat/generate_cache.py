@@ -1,6 +1,7 @@
 from .rules import texts
 from .tools import isat_filename, rot13
 from subprocess import Popen, PIPE
+import sys
 
 '''
 Assemble parameters for mary speech engine.
@@ -40,18 +41,19 @@ def convert_sample_rate(infile, outfilename):
 Generate cached voices.
 '''
 if __name__ == '__main__':
-    print "Generating cache of voices."
+    parser = argparse.ArgumentParser(description='Generates a cache of rendered TTS audio files for later usage. Automatically caches all texts in the rules.py file. Needs a MaryTTS server for generating the audio and SOX must be installed to convert the audio files.')
+    parser.add_argument('server', metavar='server_url', type=str, help='MaryTTS web server URL', default='http://localhost:59125/process')
+    args = parser.parse_args()
     from urllib import urlencode
     from urllib2 import Request, urlopen, HTTPError
-    SERVER_URL = 'http://localhost:59125/process'
 
-    print "Using server URL %s." % SERVER_URL
+    print "Using server URL %s." % args.server
     for id, text in texts.items():
         if type(text) != tuple:
             continue
         print "Text: '''%s'''" % text[0]
         data = urlencode(mary_params(*text))
-        req = Request(SERVER_URL, data)
+        req = Request(args.server, data)
         response = urlopen(req)
         outfile = isat_filename(id, text)
         convert_sample_rate(response, outfile)

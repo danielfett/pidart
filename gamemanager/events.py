@@ -56,3 +56,9 @@ class UpdateSettings(Event):
 
 class SettingsChanged(Event):
     """ Something in the config has changed, new config is attached. """
+
+class ErrorMessage(Event):
+    """ Some general error occured. """
+
+class PerformSelfUpdate(Event):
+    """ Command to update the running python file. """

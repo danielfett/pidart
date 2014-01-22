@@ -3,7 +3,8 @@
 from time import sleep
 from datetime import datetime
 from platform import node
-from sys import exit
+from sys import exit, executable, argv
+from os import execl
 from operator import methodcaller, itemgetter
 from copy import deepcopy
 import argparse
@@ -18,6 +19,7 @@ from components.isatsounds import ISATSounds
 from components.espeaksounds import EspeakSounds
 from components.legacysounds import LegacySounds
 
+reload_afterwards = False # this is set to true to reload this python file after execution
 
 """ MAIN COMPONENT """
 
@@ -309,10 +311,12 @@ class DartManager(Component):
     def __init__(self, one_game):
         Component.__init__(self)
         
+        VersionManager().register(self)
         DartGame(one_game).register(self)
         DartsWebServer().register(self)
         Logger().register(self)
         DetailedLogger().register(self)
+        
         self.inputsys = None
         self.soundsys = None
         self.logsys = None
@@ -370,7 +374,24 @@ class DartManager(Component):
             self.set_input_file(config['inputFile'])
         #if 'logging' in config:
         #    self.set_logging(config['logging'])
-            
+
+class VersionManager(Component):
+
+    @handler('PerformSelfUpdate')
+    def self_update(self):
+        global reload_afterwards
+        print "Self-updating..."
+        from subprocess import Popen
+        p = Popen("git pull", shell=True)
+        (stdoutdata, stderrdata) = p.communicate()
+        if p.returncode != 0:
+            self.fire(ErrorMessage("Unable to execute git pull; error:\n%s" % stderrdata))
+            return 
+        print "Stopping..."
+        reload_afterwards = True
+        self.root.stop()
+        
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Start a dart game.')
@@ -405,3 +426,6 @@ if __name__ == "__main__":
     if len(args.players):
         m.fire(StartGame(args.players, args.init, args.test))
     m.run()
+    if reload_afterwards:
+        print "Reloading..."
+        execl(executable, *([executable]+argv))

@@ -149,7 +149,7 @@
 		</div>
 	      </div>
 	      <div class="dropfrom" data-drop="true" ng-model="availablePlayers" jqyoui-droppable="{multiple:true, onDrop: 'sortAvailablePlayers'}">
-		<div class="btn btn-info btn-dragdrop" ng-repeat="p in availablePlayers | orderBy:['-games', '-rank']" ng-model="availablePlayers" data-drag="true" data-jqyoui-options="{revert: 'invalid'}" jqyoui-draggable="{index: {{$index}}}">
+		<div class="btn btn-{{(p.games > 70) ? 'info' : 'default'}} btn-dragdrop" ng-repeat="p in availablePlayers | orderBy:['-games', '-rank']" ng-model="availablePlayers" data-drag="true" data-jqyoui-options="{revert: 'invalid'}" jqyoui-draggable="{index: {{$index}}}">
 		  {{p.name}}
 		</div>
 	      </div>
@@ -227,7 +227,10 @@
 	<input class="btn btn-primary" type="submit" value="Throw dart" ng-click="debugThrowDart()" style="display: inline;">
       </div>
       <div class="form-group">
-	<input class="btn btn-primary" type="submit" value="Next player" ng-click="debugNextPlayer()"><br>
+	<input class="btn btn-default" type="submit" value="Next player" ng-click="debugNextPlayer()"><br>
+      </div>
+      <div class="form-group">
+	<input class="btn btn-default" type="submit" value="Self-Update" ng-click="debugPerformSelfUpdate()"><br>
       </div>
     </div>
 
