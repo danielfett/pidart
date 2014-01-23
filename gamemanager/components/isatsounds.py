@@ -85,24 +85,22 @@ class ISATSounds(Component):
 
     def _adjust_music(self, state):
         if state.state != 'playing':
-            print "state is %s, stopping music" % state.state
             if self.music:                
                 pygame.mixer.music.fadeout(700)
                 self.music = None
             return
-        points = state.currentPlayer.score - state.currentScore
-        if len(state.currentDarts) == 3 and points > 0:
+        score = state.currentPlayer.score - state.currentScore
+        if len(state.currentDarts) == 3 and score > 0:
             # This was the last dart, we don't change the music now.
             return
-        frames = len(state.currentPlayer.history)
         
-        if points > 180:
+        if score > 180:
             self._play_music(self.MUSIC[0])
-        elif points > 60:
-            self._play_music(self.MUSIC[1])
-        else:
+        elif ((score <= 20) or (score % 3 == 0)): 
+            # score is single-dart-checkoutable
             self._play_music(self.MUSIC[2])
-        print "New music: %s" % self.music
+        else:
+            self._play_music(self.MUSIC[1])
 
     def _play_music(self, f):
         if self.music == f:
