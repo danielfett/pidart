@@ -143,7 +143,7 @@ class Root(Controller):
 
     def xhr(self, *args, **kwargs):
         realm = "eDarts"
-        users = {"admin": "adminx"}
+        users = {"infsec": "temp!?"}
         encrypt = str
 
         if not check_auth(self.request, self.response, realm, users, encrypt):
