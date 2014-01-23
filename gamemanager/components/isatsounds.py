@@ -96,7 +96,7 @@ class ISATSounds(Component):
         
         if score > 180:
             self._play_music(self.MUSIC[0])
-        elif ((score <= 20) or (score % 3 == 0)): 
+        elif ((score <= 20) or (score <= 60 and score % 3 == 0)): 
             # score is single-dart-checkoutable
             self._play_music(self.MUSIC[2])
         else:
