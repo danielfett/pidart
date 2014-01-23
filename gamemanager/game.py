@@ -399,7 +399,7 @@ if __name__ == "__main__":
                         help="player's names")
     parser.add_argument('--init', default=301, type=int, 
                         help="initial number of points")
-    parser.add_argument('--snd', default='legacy',
+    parser.add_argument('--snd', default='isat',
                         help="sound system (none/isat/legacy/espeak)")
     parser.add_argument('--dev', default='', 
                         help="input USB device (use empty string for no serial input)")

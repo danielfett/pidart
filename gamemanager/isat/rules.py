@@ -65,8 +65,10 @@ texts = {
     'checkout_single': ('Single-Dart check-outable', 'happy'),
 
     # texts for hit_winner
-    'checked_out_winner': ("Checked out! You are today's winner!", 'excited'),
-    'checked_out': ('Checked out!', 'happy'),
+    #'checked_out_winner': ("Checked out! You are today's winner!", 'excited'),
+    'checked_out_winner': 'wav:wwm/spielende',
+    #'checked_out': ('Checked out!', 'happy'),
+    'checked_out': 'wav:wwm/richtig_stufe_2',
     
     # texts for hit_bust
     'bust': ('Bust!', 'amused'),

@@ -12,6 +12,8 @@ from isat.tools import isat_filename
 from isat.rules import texts, hit, hit_bust, hit_winner
 
 class ISATSounds(Component):
+    SOUND_BASE = '../sounds/old-%s.wav'
+    
     SOUNDS = [
         'nextplayer',
         'finish',
@@ -21,14 +23,23 @@ class ISATSounds(Component):
         'bullseye',
         'beep']
 
+    MUSIC_BASE = '../sounds/wwm/%s.wav'
+
+    MUSIC = [
+        'stufe_1_looping',
+        'stufe_2',
+        'stufe_3'
+        ]
+
     def __init__(self, silent = False):
         super(ISATSounds, self).__init__()
 
         pygame.mixer.pre_init(44100, -16, 2, 1024)
         pygame.init()
+        self.music = None
         self.sounds = {}
         for n in self.SOUNDS:
-            f = '../sounds/old-%s.wav' % n
+            f = self.SOUND_BASE % n
             if not exists(f):
                 raise Exception("File does not exist: %s" % f)
             self.sounds[n] = pygame.mixer.Sound(f)
@@ -42,8 +53,7 @@ class ISATSounds(Component):
             if not exists(f):
                 raise Exception("File does not exist: %s" % f)
             self.sounds_tts[id] = pygame.mixer.Sound(f)
-        if silent:
-            for id, _ in texts.items():
+            if silent:
                 self.sounds_tts[id].set_volume(0)
         self._say('ready')
 
@@ -72,7 +82,40 @@ class ISATSounds(Component):
         except Exception, e:
             print e
             self._play(alt)
-            
+
+    def _adjust_music(self, state):
+        if state.state != 'playing':
+            print "state is %s, stopping music" % state.state
+            if self.music:                
+                pygame.mixer.music.fadeout(700)
+                self.music = None
+            return
+        points = state.currentPlayer.score - state.currentScore
+        if len(state.currentDarts) == 3 and points > 0:
+            # This was the last dart, we don't change the music now.
+            return
+        frames = len(state.currentPlayer.history)
+        
+        if points > 180:
+            self._play_music(self.MUSIC[0])
+        elif points > 60:
+            self._play_music(self.MUSIC[1])
+        else:
+            self._play_music(self.MUSIC[2])
+        print "New music: %s" % self.music
+
+    def _play_music(self, f):
+        if self.music == f:
+            return
+        if self.music:
+            pygame.mixer.music.fadeout(700)
+        pygame.mixer.music.load(self.MUSIC_BASE % f)
+        pygame.mixer.music.play(-1)
+        self.music = f
+
+    def _stop_music(self):
+        pygame.mixer.music.stop()
+        self.music = None
 
     def DartStuck(self, *args):
         self._play('beep')
@@ -81,14 +124,22 @@ class ISATSounds(Component):
         self._play('beep')
 
     def Hit(self, state, code):
-        sleep(0.25)
+        sleep(0.2)
         self._say_from_rule(hit(state), 'beep')
+        self._adjust_music(state)
 
     def HitBust(self, state, code):
+        self._stop_music()
         self._say_from_rule(hit_bust(state), 'winner')
+        self._adjust_music(state)
 
     def HitWinner(self, state, code):
+        self._stop_music()
         self._say_from_rule(hit_winner(state), 'finish')
+        self._adjust_music(state)
+
+    def GameOver(self, state):
+        self._stop_music()
 
     def EnterHold(self, *args):
         sleep(0.5)
@@ -96,3 +147,4 @@ class ISATSounds(Component):
 
     def FrameStarted(self, state): 
         self._say('next_player')
+        self._adjust_music(state)
