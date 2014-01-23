@@ -67,6 +67,7 @@ texts = {
     # texts for hit_winner
     #'checked_out_winner': ("Checked out! You are today's winner!", 'excited'),
     'checked_out_winner': 'wav:wwm/spielende',
+    'checked_out_winner_2': 'wav:others/hallelujah-trail',
     #'checked_out': ('Checked out!', 'happy'),
     'checked_out': 'wav:wwm/richtig_stufe_2',
     
@@ -237,6 +238,11 @@ def hit_winner(state):
             'weight': 50
             },
         
+        {
+            'use': num_before == 0,
+            'text': 'checked_out_winner_2',
+            'weight': 50
+            },
         {
             'use': num_before > 0,
             'text': 'checked_out',
