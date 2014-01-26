@@ -308,6 +308,12 @@ class DartGame(Component):
 
 class DartManager(Component):
 
+    SOUND_COMPONENTS = {
+        'none': type(None),
+        'isat': ISATSounds,
+        'espeak': EspeakSounds,
+        'legacy': LegacySounds
+    }
     def __init__(self, one_game):
         Component.__init__(self)
         
@@ -322,28 +328,26 @@ class DartManager(Component):
         self.logsys = None
 
     def set_sound(self, newsnd):
-        if self.soundsys != None:
+        newtype = self.SOUND_COMPONENTS[newsnd]
+        if type(self.soundsys) != newtype:
             print "unregistering old soundsys"
             self.soundsys.unregister()
+
+        if newtype == type(None):
             self.soundsys = None
         else:
-            print "no old soundsys"
-        if newsnd == 'isat':
-            self.soundsys = ISATSounds()
-        elif newsnd == 'espeak':
-            self.soundsys = EspeakSounds()
-        elif newsnd == 'legacy':
-            self.soundsys = LegacySounds()
-        if self.soundsys != None:
+            self.soundsys = newtype()
             self.soundsys.register(self)
-            self.fireEvent(SettingsChanged({'sound': newsnd}))
+        self.fireEvent(SettingsChanged({'sound': newsnd}))
     
+    # TODO: the serial device is not closed properly
     def set_input_device(self, path):
         if self.inputsys:
             self.inputsys.unregister()
             self.inputsys = None
         if path:
             self.inputsys = DartInput(path)
+            self.inputsys.register(self)
             self.fireEvent(SettingsChanged({'inputDevice': path}))
 
     '''
@@ -353,17 +357,7 @@ class DartManager(Component):
         if path:
             fi = FileInput(path)
             fi.register(self)
-    '''
-    def set_logging(self, enable):
-        if enable:
-            if not self.logsys:
-                self.logsys = DetailedLogger()
-                self.logsys.register(self)
-        else:
-            if self.logsys:
-                self.logsys.unregister()
-        self.fireEvent(SettingsChanged({'logging': (enable == True)}))
-    '''
+    
     @handler('UpdateSettings')
     def handle_set_config(self, config):
         if 'sound' in config:
@@ -372,8 +366,6 @@ class DartManager(Component):
             self.set_input_device(config['inputDevice'])
         if 'inputFile' in config:
             self.set_input_file(config['inputFile'])
-        #if 'logging' in config:
-        #    self.set_logging(config['logging'])
 
 class VersionManager(Component):
 

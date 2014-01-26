@@ -1,6 +1,6 @@
 from game import DartGame
 
-from circuits import Component, Event, Debugger, handler
+from circuits import Component, Event, Debugger, handler, reprhandler
 
 from events import *
 from components.webserver import DartsWebServer
@@ -57,20 +57,24 @@ class TestFullGame(unittest.TestCase):
 
     def test_a(self):
         comp = DartGame()\
-            + FileInput(self.TESTFILE, delay=0.5, test=True)
+            + FileInput(self.TESTFILE, delay=0.5)
         self.component(comp)
             
     def test_b(self):
-        #ws = DartsWebServer()
-        comp = DartGame()\
-            + Logger()\
-            + EspeakSounds()\
-            + ISATSounds()\
-            + LegacySounds()\
-            + DetailedLogger(True)\
-            + FileInput(self.TESTFILE, delay=0.5, test=True)
+        dl = DetailedLogger(test=True)
+        comp = DartGame() + FileInput(self.TESTFILE, delay=0.5) \
+               + Logger()\
+               + EspeakSounds(test=True)\
+               + ISATSounds(test=True)\
+               + LegacySounds(test=True)\
+               + dl + Debugger()\
+               + DartsWebServer()
         self.component(comp)
-        #ws.close()
+
+        # check to see if the detailed logger worked
+        num_games, num_throws = dl.get_num_rows()
+        self.assertEquals(num_games, 1)
+        self.assertEquals(num_throws, 19)
 
     def test_run(self):
         p = Popen(['./game.py', '--dev', 'none', '--file', self.TESTFILE, '--nolog', '--test', '--one-game', '--snd', 'none'], stdout=PIPE, stderr=PIPE)

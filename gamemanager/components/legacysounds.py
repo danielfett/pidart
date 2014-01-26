@@ -15,14 +15,16 @@ class LegacySounds(Component):
         'beep']
         
 
-    def __init__(self):
+    def __init__(self, test=False):
         super(LegacySounds, self).__init__()
+
         pygame.mixer.pre_init(44100,-16,2, 1024)
         pygame.init()
         self.sounds = {}
         for n in self.SOUNDS:
             self.sounds[n] = pygame.mixer.Sound('../sounds/old-%s.wav' % n)
-        self.play('beep')
+            if test:
+                self.sounds[n].set_volume(0)
         self.play('beep')
     
     def play(self, sound):

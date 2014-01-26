@@ -29,12 +29,12 @@ class DartInput(Component):
                 raise Exception("Unknown fieldcode: %x" % inp)
 
 class FileInput(Component):
-    def __init__(self, f, delay = 3, test = False):
+    def __init__(self, f, delay = 3):
         super(FileInput, self).__init__()
         with open(f, 'r') as infile:
             self.data = infile.read().split(' ')
         players = self.data[0].split(':')[1].split(',')
-        self.fire(StartGame(players, 301, test))
+        self.fire(StartGame(players, 301, False))
         self.pointer = None
         self.delay = delay
 
@@ -52,13 +52,7 @@ class FileInput(Component):
             else:
                 self.fire(ReceiveInput('code', s))
             self.pointer += 1
+            print "Generating input event"
         elif self.pointer >= len(self.data):
             self.unregister()
-
-
-'''
-class FakeInput(object):
-    def read(self):
-        inp = raw_input("? ").strip().upper()
-        return inp
-'''
+            print "Stopping"

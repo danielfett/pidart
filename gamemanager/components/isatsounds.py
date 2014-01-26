@@ -31,21 +31,20 @@ class ISATSounds(Component):
         'stufe_3'
         ]
 
-    def __init__(self, silent = False):
+    def __init__(self, test=False):
         super(ISATSounds, self).__init__()
 
         pygame.mixer.pre_init(44100, -16, 2, 1024)
         pygame.init()
         self.music = None
         self.sounds = {}
+        volume = 0 if test else 0.9
         for n in self.SOUNDS:
             f = self.SOUND_BASE % n
             if not exists(f):
                 raise Exception("File does not exist: %s" % f)
             self.sounds[n] = pygame.mixer.Sound(f)
-        if silent:
-            for n in self.SOUNDS:
-                self.sounds[n].set_volume(0)
+            self.sounds[n].set_volume(volume)
             
         self.sounds_tts = {}
         for id, sound in texts.items():
@@ -53,8 +52,7 @@ class ISATSounds(Component):
             if not exists(f):
                 raise Exception("File does not exist: %s" % f)
             self.sounds_tts[id] = pygame.mixer.Sound(f)
-            if silent:
-                self.sounds_tts[id].set_volume(0)
+            self.sounds_tts[id].set_volume(volume)
         self._say('ready')
 
     def _play(self, sound):
@@ -65,7 +63,7 @@ class ISATSounds(Component):
     def _say(self, text_id):
         print "Saying %s" % text_id
         while pygame.mixer.get_busy():
-            sleep(0.1)
+            sleep(0.05)
         self.sounds_tts[text_id].play()
 
     def _say_from_rule(self, rules, alt):
@@ -94,13 +92,29 @@ class ISATSounds(Component):
             # This was the last dart, we don't change the music now.
             return
         
+        checkoutable = (score <= 20 or \
+             (score <= 60 and score % 3 == 0) or \
+             (score <= 40 and score % 2 == 0) or \
+             score == 25 or \
+             score == 50)
+
         if score > 180:
             self._play_music(self.MUSIC[0])
-        elif ((score <= 20) or (score <= 60 and score % 3 == 0)): 
+        # TODO: move the following check to the tools
+        elif checkoutable: 
             # score is single-dart-checkoutable
             self._play_music(self.MUSIC[2])
         else:
             self._play_music(self.MUSIC[1])
+
+        if checkoutable:
+            pygame.mixer.music.set_volume(1.0)
+        elif score > 180:
+            pygame.mixer.music.set_volume(0.4)
+        elif score > 60:
+            pygame.mixer.music.set_volume(0.6)
+        else:
+            pygame.mixer.music.set_volume(0.85)
 
     def _play_music(self, f):
         if self.music == f:
