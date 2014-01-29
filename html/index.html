@@ -88,8 +88,8 @@
 	    <thead>
 	      <tr>
 		<th></th>
-		<th><a href="" ng-click="predicate='p.rank'">Rank</th>
-		<th><a href="" ng-click="predicate='p.started'">Name</a></th>
+		<th><a href="" ng-click="predicate='rank'">Rank</th>
+		<th><a href="" ng-click="predicate='started'">Name</a></th>
 		<th>Last Frame</th>
 		<th>Score</th>
 		<th>#Frames</th>
@@ -135,46 +135,36 @@
 	</div>
 	<div class="tab-pane" id="newgame">
 	  <div class="row">
-	    <div class="col-md-6">
-	      <div class="row">
-		<div class="col-md-7">
-		  <h2>Available Players</h2>
-		</div>
-		<div class="col-md-3">
-		  <input type="text" class="form-control" ng-model="newPlayerName"
-			 placeholder="XYZ" style="margin-top: 1em">
-		</div>
-		<div class="col-md-2">
-		  <input class="btn btn-default" type="submit" value="add" style="margin-top: 1em;" ng-click="addPlayer()" maxlength="3">
-		</div>
-	      </div>
-	      <div class="dropfrom" data-drop="true" ng-model="availablePlayers" jqyoui-droppable="{multiple:true, onDrop: 'sortAvailablePlayers'}">
-		<div class="btn btn-{{(p.games > 70) ? 'info' : 'default'}} btn-dragdrop" ng-repeat="p in availablePlayers | orderBy:['-games', '-rank']" ng-model="availablePlayers" data-drag="true" data-jqyoui-options="{revert: 'invalid'}" jqyoui-draggable="{index: {{$index}}}">
-		  {{p.name}}
-		</div>
-	      </div>
+	    <div class="col-md-7">
+	      <h2>Select Players</h2>
 	    </div>
-	    <div class="col-md-6">
-	      <h2>Selected Players</h2>
-	      
-	      <div class="dropto" data-drop="true" ng-model="selectedPlayers" jqyoui-droppable="{multiple:true, onDrop: 'sortSelectedPlayers'}">
-		<div class="btn btn-info btn-dragdrop" ng-repeat="p in selectedPlayers | orderBy:['rank', 'name']" data-drag="true" ng-model="selectedPlayers" data-jqyoui-options="{revert: 'invalid'}" jqyoui-draggable="{index: {{$index}}}">
-		  {{p.name}} (<span ng-if="p.rank > 0">{{p.rank | number:0}}</span><span ng-if="p.rank == 0">new</span>)
-		</div>
-	      </div>
+	    <div class="col-md-3">
+	      <input type="text" class="form-control" ng-model="newPlayerName"
+		     placeholder="Enter player shortcut, e.g., XYZ" style="margin-top: 1em">
 	    </div>
-	  </div>	
-	  
-	  <div class="row form-group">
-	    <div class="col-md-4 col-md-offset-6">
-	      <label for="initialValue">Initial points:</label>
-	      <input class="form-control" type="number" value="301" min="1" max="1001" id="initialValue" ng-model="initialValue">
-	    </div>
-	    <div class="col-md-2" style="valign: bottom">
-	      <input class="btn btn-primary" type="submit" value="start new game" style="margin-top: 1.75em;" ng-click="newGame()">
+	    <div class="col-md-2">
+	      <input class="btn btn-default" type="submit" value="add" style="margin-top: 1em;" ng-click="addPlayer()" maxlength="3">
 	    </div>
 	  </div>
-	  <a href="" ng-click="updateChartFull()">Update rankings</a>
+	  <div ng-model="availablePlayers">
+	    <div class="btn btn-{{p.selected ? 'info' : 'default'}}" style="font-weight: {{(p.games > 70) ? 'bold' : 'normal'}}" ng-repeat="p in availablePlayers | orderBy: p.games" ng-model="availablePlayers" ng-click="p.selected = (! p.selected)">
+	      {{p.name}}
+	    </div>
+	  </div>
+	  
+	  <div class="row form-group"  style="margin-top: 1.75em;">
+	    <div class="col-md-2 col-md-offset-4">
+	      Initial points:
+	    </div>
+	    <div class="col-md-2">
+	      <input class="form-control" type="number" value="301" min="1" max="1001" id="initialValue" ng-model="initialValue">
+	    </div>
+	    <div class="col-md-4" style="valign: bottom">
+	      <input class="btn btn-primary" type="submit" value="start new game" ng-click="newGame(true)">
+	      <input class="btn btn-default" type="submit" value="start test game" ng-click="newGame(false)">
+	      <input class="btn btn-default" type="submit" value="cancel game" ng-click="cancelGame()" ng-hide="state.state != 'playing'">
+	    </div>
+	  </div>
 	</div>
 	<div class="tab-pane" id="settings">
 	  <form class="form-horizontal" role="form" style="margin-top: 1em">
@@ -193,16 +183,6 @@
 		  <option value="espeak">ESpeak</option>
 		  <option value="legacy">Legacy</option>
 		</select>
-	      </div>
-	    </div>
-	    <div class="form-group">
-	      <div class="col-sm-offset-2 col-sm-10">
-		<div class="checkbox">
-		  <label>
-		    <input type="checkbox" class="" id="setTesting" ng-model="settings.logging">
-		    Test game (no logging)
-		  </label>
-		</div>
 	      </div>
 	    </div>
 	    <div class="form-group">
@@ -243,7 +223,7 @@
     <script src="js/bootstrap.min.js"></script>
     <script src="js/reconnectingWebsocket.js"></script>
     <script src="js/ng-google-chart.js"></script>
-    <script src="js/angular-dragdrop.js"></script>
+<!--    <script src="js/angular-dragdrop.js"></script> -->
     <script src="index.js"></script>
   </body>
 </html>
