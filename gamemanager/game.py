@@ -324,12 +324,12 @@ class DartManager(Component):
         DetailedLogger().register(self)
         
         self.inputsys = None
-        self.soundsys = None
+        self.soundsys = type(None)
         self.logsys = None
 
     def set_sound(self, newsnd):
         newtype = self.SOUND_COMPONENTS[newsnd]
-        if type(self.soundsys) != newtype:
+        if self.soundsys != type(None) and type(self.soundsys) != newtype:
             print "unregistering old soundsys"
             self.soundsys.unregister()
 
