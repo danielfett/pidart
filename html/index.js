@@ -1,4 +1,5 @@
 
+var usualSuspects = ['DF', 'ES', 'GS', 'OC', 'RK', 'TT'];
 
 function fitText() {
     var divisors = [4, 6, 12, 18];
@@ -111,26 +112,24 @@ $(document).ready(function() {
     fitText()
 });
 
-angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', function ($scope, $timeout, $filter) {
+angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope, $timeout, $filter) {
     $scope.state = {};
     $scope.availablePlayers = [];
-    $scope.selectedPlayers = [];
     $scope.latestScores = {};
-    $scope.usualSuspects = ['DF', 'ES', 'GS', 'OC', 'RK', 'TT'];
     $scope.playersInChart = [];
     $scope.initialValue = 301;
-    $scope.predicate = 'p.started';
-    $scope.chartUpdating = true; // chart is being updated (show loader)
+    $scope.predicate = 'started';
+    $scope.chartUpdating = false; // chart is being updated (show loader)
     $scope.oldChartData = false; // We use this to only update the chart when something has actually changed.
     $scope.debugging = false;
     $scope.debugDartValue = 'T20';
-    $scope.firstChartUpdateTriggered = false;
     $scope.settings = {
 	sound: 'espeak',
 	inputDevice: '',
 	logging: true
     }
     $scope.serverID = null;
+    $scope.isOfficialGame = true;
 
     var history = {};
     history.type="LineChart";
@@ -150,17 +149,20 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 
     $scope.chart = history;
 
-    var wsuri = window.location.href.replace(/^http(s?:\/\/.*):\d+\/.*$/, 'ws$1:8080/websocket');
+    var wsuri = window.location.href.replace(/^http(s?:\/\/[^/:]*)(:\d+)?\/.*$/, 'ws$1:8080/websocket');
     $scope.sock = new ReconnectingWebSocket(wsuri);
 
     $(document).ready(function() {
 	$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 	    if (e.target.hash == '#stats') {
 		$scope.$emit('resizeMsg');
-	    }
+		$scope.updateChartFull();
+	    } 
+	    if (e.target.hash == '#newgame') {
+		$scope.updateAvailablePlayers();
+	    } 	
 	});
-	$scope.updateChartFull();
-	window.setInterval($scope.updateChartFull, 1000 * 60 * 5);
+	//window.setInterval($scope.updateChartFull, 1000 * 60 * 5);
 
     });
 
@@ -192,12 +194,8 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 
 	    $scope.$apply();
 	    fitText();
-	    if (! $scope.firstChartUpdateTriggered) {
-		$scope.updateChartFull();
-	    }
 	} else if (message.type == 'info') {
 	    if (message.info == 'game_initialized') {
-		$scope.updateChartFull();
 		$('a[href="#order"]').trigger('click');
 	    }
 	} else if (message.type == 'settings') {
@@ -206,6 +204,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	} else if (message.type == 'version') {
 	    if ($scope.serverID === null) {
 		$scope.serverID = message.version;
+		//$scope.updateChartFull();
 	    } else {
 		if ($scope.serverID != message.version) {
 		    window.location.reload();
@@ -221,8 +220,14 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	});
     }
 
-    $scope.newGame = function() {
-	if ($scope.selectedPlayers.length < 2) {
+    $scope.newGame = function(official) {
+	var selectedPlayers = [];
+	for (p in $scope.availablePlayers) {
+	    if ($scope.availablePlayers[p].selected) {
+		selectedPlayers.push($scope.availablePlayers[p]);
+	    }
+	}
+	if (selectedPlayers.length < 2) {
 	    alert("Please select at least two players.");
 	    return;
 	}
@@ -232,12 +237,12 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	    }
 	}
 	var players = [];
-	for (var i = 0; i < $scope.selectedPlayers.length; i ++) {
-	    players.push($scope.selectedPlayers[i].name);
+	for (var i = 0; i < selectedPlayers.length; i ++) {
+	    players.push(selectedPlayers[i].name);
 	}
 	var testing = '';
-	if (! $scope.settings.logging) {
-	    testing = '\n\nThis is a *TEST* game (no logging enabled in settings).';
+	if (! official) {
+	    testing = '\n\nThis is an unofficial game (no logging enabled).';
 	}
 	if (! confirm("Is this order correct?\n" + players.join(', ') + testing)) {
 	    return;
@@ -246,25 +251,29 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	    command: 'new-game',
 	    players: players,
 	    startvalue: $scope.initialValue,
-	    testgame: ! $scope.settings.logging
+	    testgame: ! official
 	});
+	if (official) {
+	    sessionStorage['lastPlayers'] = JSON.stringify(players);
+	}
     };
 
     $scope.updateChartFull = function() {
 	if (! $scope.state.players) {
 	    return;
 	}
-	$scope.firstChartUpdateTriggered = true;
 	$scope.chartUpdating = true;
 	$.ajax('http://infsec.uni-trier.de/dartenbank/rpc/elo.php?count=30', {
 	    dataType: 'JSON'
 	})
 	    .done(function(data) {
+		$scope.chartUpdating = false;
 		if ($scope.oldChartData === data) {
+		    $scope.$apply();
 		    return;
 		}
 		$scope.oldChartData = data;
-		$scope.playersInChart = $.merge([], $scope.usualSuspects);
+		$scope.playersInChart = $.merge([], usualSuspects);
 		console.debug("-B");
 		$.each($scope.state.players, function (i, name) {
 		    if ($scope.playersInChart.indexOf(name) === -1) {
@@ -297,8 +306,6 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 		    $scope.latestScores = scores;
 		});
 		$scope.updateChartRanking(false);
-		$scope.updateAvailablePlayers();
-		$scope.chartUpdating = false;
 	    })
 	    .fail(function(xhr, status, error) {
 		$scope.chartUpdating = false;
@@ -320,7 +327,7 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 		todaysRanking
 	    )
 	);
-	//$scope.$apply();
+	$scope.$apply();
     };
 
     $scope.getChartRowFromRatings = function(date, ratings) {
@@ -344,31 +351,30 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
 	window.open('http://infsec.uni-trier.de/dartenbank/input/remote-input.php?standings=' + urlparam);
     }
 
-
-    $scope.sortAvailablePlayers = function() {
-	$scope.availablePlayers = $filter('orderBy')($scope.availablePlayers, ['-games', '-rank']);
-    };
-
-    $scope.sortSelectedPlayers = function() {
-	$scope.selectedPlayers =  $filter('orderBy')($scope.selectedPlayers, ['rank', 'name']);
-	$scope.$apply();
-    };
-
     $scope.updateAvailablePlayers = function() {
+	$scope.chartUpdating = true;
 	$.ajax('http://infsec.uni-trier.de/dartenbank/rpc/get-players.php', {
 	    dataType: 'JSON'
 	})
 	    .done(function(data) {
 		$scope.availablePlayers = [];
-		$scope.selectedPlayers = [];
+		var lastPlayers = [];
+		if (sessionStorage.getItem('lastPlayers') !== null) {
+		    lastPlayers = JSON.parse(sessionStorage['lastPlayers']);
+		}
 		$.each(data, function(name, games) {
 		    var rank = 1500;
 		    if (typeof($scope.latestScores[name]) != 'undefined') {
 			rank = $scope.latestScores[name];
 		    }
-		    $scope.availablePlayers.push({name: name, games: games, rank:rank});
+		    var selected = (lastPlayers.indexOf(name) > -1) || (usualSuspects.indexOf(name) > -1);
+		    $scope.availablePlayers.push({name: name, games: games, rank:rank, selected:selected});
 		});
-		$scope.sortAvailablePlayers();
+		$scope.chartUpdating = false;
+		$scope.$apply();
+	    })
+	    .fail(function() {
+		$scope.chartUpdating = false;
 	    });
     };
 
@@ -471,6 +477,12 @@ angular.module('darts', ['googlechart', 'ngDragDrop']).controller('DartCtrl', fu
     $scope.debugPerformSelfUpdate = function () {
 	postxhr({
 	    command: 'perform-self-update'
+	});
+    }
+
+    $scope.cancelGame = function () {
+	postxhr({
+	    command: 'cancel-game'
 	});
     }
 

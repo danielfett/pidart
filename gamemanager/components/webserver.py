@@ -175,6 +175,8 @@ class Root(Controller):
             self.fireEvent(ReceiveInput('generic', 'next_player'))
         elif cmd == 'perform-self-update':
             self.fire(PerformSelfUpdate())
+        elif cmd == 'cancel-game':
+            self.fireEvent(ReceiveInput('generic', 'cancel_game'))
 
         return simplejson.dumps({'success': True})
 

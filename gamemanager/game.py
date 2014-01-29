@@ -252,6 +252,9 @@ class DartGame(Component):
             if source == 'generic':
                 if value == 'next_player':
                     self.finish_frame(hold=False)
+                elif value == 'cancel_game':
+                    self.state.state = 'gameover'
+                    self.fire(GameOver(deepcopy(self.state)))
             if source == 'code':
                 if value == 'XSTUCK':
                     self.fire(DartStuck())
