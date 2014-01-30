@@ -227,6 +227,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 		selectedPlayers.push($scope.availablePlayers[p]);
 	    }
 	}
+	selectedPlayers.sort(function(a,b){return a.rank-b.rank});
 	if (selectedPlayers.length < 2) {
 	    alert("Please select at least two players.");
 	    return;
@@ -240,6 +241,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	for (var i = 0; i < selectedPlayers.length; i ++) {
 	    players.push(selectedPlayers[i].name);
 	}
+	
 	var testing = '';
 	if (! official) {
 	    testing = '\n\nThis is an unofficial game (no logging enabled).';
@@ -357,25 +359,36 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	    dataType: 'JSON'
 	})
 	    .done(function(data) {
-		$scope.availablePlayers = [];
-		var lastPlayers = [];
-		if (sessionStorage.getItem('lastPlayers') !== null) {
-		    lastPlayers = JSON.parse(sessionStorage['lastPlayers']);
-		}
-		$.each(data, function(name, games) {
-		    var rank = 1500;
-		    if (typeof($scope.latestScores[name]) != 'undefined') {
-			rank = $scope.latestScores[name];
-		    }
+		$.ajax('http://infsec.uni-trier.de/dartenbank/rpc/elo.php?count=1', {
+		    dataType: 'JSON'
+		})
+		    .done(function(rankdata) {
+
+			$scope.availablePlayers = [];
+			var lastPlayers = [];
+			if (sessionStorage.getItem('lastPlayers') !== null) {
+			    lastPlayers = JSON.parse(sessionStorage['lastPlayers']);
+			}
+			var ranking = rankdata[Object.keys(rankdata)[0]];
+			$.each(data, function(name, games) {
+			    var rank = 1500;
+			    if (typeof(ranking[name]) != 'undefined') {
+				rank = ranking[name];
+			    }
 		    var selected = (lastPlayers.indexOf(name) > -1) || (usualSuspects.indexOf(name) > -1);
-		    $scope.availablePlayers.push({name: name, games: games, rank:rank, selected:selected});
-		});
-		$scope.chartUpdating = false;
-		$scope.$apply();
+			    $scope.availablePlayers.push({name: name, games: games, rank:rank, selected:selected});
+			});
+			$scope.chartUpdating = false;
+			$scope.$apply();
+		    })
+		    .fail(function() {
+			$scope.chartUpdating = false;
+		    });
 	    })
 	    .fail(function() {
 		$scope.chartUpdating = false;
 	    });
+	
     };
 
     $scope.addPlayer = function() {
