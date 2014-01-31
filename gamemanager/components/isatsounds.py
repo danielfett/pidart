@@ -11,6 +11,8 @@ from os.path import exists
 from isat.tools import isat_filename
 from isat.rules import texts, hit, hit_bust, hit_winner
 
+from darttools import singledart_checkoutable
+
 class ISATSounds(Component):
     SOUND_BASE = '../sounds/old-%s.wav'
     
@@ -56,8 +58,8 @@ class ISATSounds(Component):
         self._say('ready')
 
     def _play(self, sound):
-        while pygame.mixer.get_busy():
-            sleep(0.1)
+        #while pygame.mixer.get_busy():
+        #    sleep(0.1)
         self.sounds[sound].play() 
 
     def _say(self, text_id):
@@ -92,11 +94,7 @@ class ISATSounds(Component):
             # This was the last dart, we don't change the music now.
             return
         
-        checkoutable = (score <= 20 or \
-             (score <= 60 and score % 3 == 0) or \
-             (score <= 40 and score % 2 == 0) or \
-             score == 25 or \
-             score == 50)
+        checkoutable = singledart_checkoutable(score)
 
         if score > 180:
             self._play_music(self.MUSIC[0])

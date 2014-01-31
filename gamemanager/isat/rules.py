@@ -2,7 +2,9 @@
 Define rules & strings that the Text-To-Speech engine outputs.
 '''
 
-from isat.tools import convenience, fieldtexts, remove_suffix, mod, num
+from isat.tools import fieldtexts 
+from darttools import convenience, remove_suffix, mod, num, score2sum, singledart_checkoutable, in_ring
+from operator import or_
 
 '''Texts that are prepared and can be used later are stored in
 ``texts''. The key in this dictionary is an identifier that can be
@@ -44,6 +46,10 @@ texts = {
     'same_three_darts': ('What a boring choice.', 'bored'),
     'less_than_10': ('#Jung qvq lbh qbb?', 'disappointed'),
     'less_than_10_alt_1': ('#Hu-bu.', 'disappointed'),
+    'less_than_3': ('Great.', 'disappointed'),
+    'less_than_3_alt_1': ('That will be fun.', 'disappointed'),
+    'close': ('That was close!', 'happy'),
+
     'low_start': ('Just take your time.', 'bored'),
 
     # texts for a single dart
@@ -58,7 +64,7 @@ texts = {
     'washing_machine': ('Washing machine!', 'happy'),
     'double_washing_machine': ('Double washing machine!', 'happy'),
     'triple_washing_machine': ('Triple washing machine!', 'happy'),
-    'triple_20': ('#Bar, uhaqerq, naq, rvtugl! Vaperqvoyr! Nznmvat! Snagnfgvp!', 'excited'),
+    'triple_20': 'wav:others/hallelujah-trail',
 
     # text for checkout zone
     'checkout_area': ('Welcome to checkout area!', 'happy'),
@@ -107,7 +113,10 @@ def hit(state):
     dart-values to get the multiplicator or the numeric value,
     respectively.
     '''
-       
+    coo = None
+    if singledart_checkoutable(score_before):
+        coo = checkout_options(score_before)
+
     rules = [
         {
             'use': (score_before - score_after) < 5,
@@ -125,19 +134,37 @@ def hit(state):
             'weight': 20,
             },
         {
-            'use': score_after < 10,
+            'use': score_after < 10 and len(darts_so_far) == 3,
             'text': 'less_than_10',
             'weight': 50,
             },
         {
-            'use': score_after < 10,
+            'use': score_after < 10 and len(darts_so_far) == 3,
             'text': 'less_than_10_alt_1',
             'weight': 50,
             },
+
         {
-            'use': score_after > 100 and len(darts_so_far) == 1 and (score_before - score_after) < 10,
+            'use': score_after < 3 and len(darts_so_far) == 3,
+            'text': 'less_than_3',
+            'weight': 50,
+            },
+        {
+            'use': score_after < 3 and len(darts_so_far) == 3,
+            'text': 'less_than_3_alt_1',
+            'weight': 50,
+            },
+        {
+            'use': score_after > 200 and len(darts_so_far) == 1 and (score_before - score_after) < 10,
             'text': 'low_start',
             'weight': 20,
+            },
+        # check if the player missed by one field
+        {
+            'use': coo != None and \
+                reduce(or_, map(lambda x: adjacent(dart,x), coo)),
+            'text': 'close',
+            'weigth': 100,
             },
         # add the default field code text with a weight of 50
         {
@@ -174,19 +201,7 @@ def hit(state):
         
         # add the all-famous washing machine(s).
         {
-            'use': sorted(darts_so_far) == ['S1', 'S20', 'S5'],
-            'text': 'washing_machine',
-            'weight': 150
-            },
-
-        {
-            'use': sorted(darts_so_far) == ['D1', 'D20', 'D5'],
-            'text': 'washing_machine',
-            'weight': 150
-            },
-
-        {
-            'use': sorted(darts_so_far) == ['T1', 'T20', 'T5'],
+            'use': in_ring(darts_so_far),
             'text': 'washing_machine',
             'weight': 150
             },
@@ -199,9 +214,9 @@ def hit(state):
             },
 
         {
-            'use': (score_after < 60) and ((score_after <= 20) or (score_after % 3 == 0)),
+            'use': singledart_checkoutable(score_after),
             'text': 'checkout_single',
-            'weight': 120
+            'weight': 100
             },
 
         # over 100
@@ -213,13 +228,13 @@ def hit(state):
 
         # pull up!
         {
-            'use': (len(darts_so_far) < 3) and score_after < 20,
+            'use': (len(darts_so_far) < 3) and score2sum(darts_so_far[-1]) > score_after,
             'text': 'pull_up',
             'weight': 80,
             },
         # pull up!
         {
-            'use': (len(darts_so_far) < 3) and score_after < 10,
+            'use': (len(darts_so_far) < 3) and score_after < 10 and score2sum(darts_so_far[-1]) > score_after,
             'text': 'pull_up_2',
             'weight': 80,
             },

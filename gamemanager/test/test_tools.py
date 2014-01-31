@@ -1,6 +1,22 @@
 from isat.tools import *
+from darttools import *
 from game import GameState
 import unittest
+
+class TestScore2sum(unittest.TestCase):
+    def test(self):
+        self.assertEqual(score2sum('D20'), 40)
+        self.assertEqual(score2sum('D25'), 50)
+        self.assertEqual(score2sum('S4i'), 4)
+        self.assertEqual(score2sum('T20'), 60)
+        self.assertEqual(score2sum('T1'), 3)
+
+class TestCheckoutOptions(unittest.TestCase):
+    def test(self):
+        self.assertEquals(sorted(checkout_options(60)), ['T20'])
+        self.assertEquals(sorted(checkout_options(24)), sorted(['D12', 'T8']))
+        self.assertEquals(sorted(checkout_options(15)), sorted(['T5', 'S15']))
+        self.assertEquals(sorted(checkout_options(6)), sorted(['S6', 'T2', 'D3']))
 
 class TestFieldtexts(unittest.TestCase):
     
@@ -10,19 +26,22 @@ class TestFieldtexts(unittest.TestCase):
 class TestInRing(unittest.TestCase):
     
     def test_a(self):
-        assert in_ring([10, 15, 2])
+        assert in_ring(['S15i', 'D10', 'S2'])
 
     def test_b(self):
-        assert in_ring([20, 1])
+        assert in_ring(['D20', 'S1'])
 
     def test_c(self):
-        assert in_ring([5, 20, 1])
+        assert in_ring(['S1i', 'D5', 'D20'])
 
     def test_d(self):
-        assert not in_ring([16, 19])
+        assert not in_ring(['S16', 'T19'])
 
     def test_e(self):
-        assert not in_ring([2, 17, 19])
+        assert not in_ring(['S2i', 'D17', 'S19'])
+
+    def test_f(self):
+        assert not in_ring(['S2', 'S2', 'S15'])
 
 
 class TestAdjacent(unittest.TestCase):
