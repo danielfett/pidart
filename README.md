@@ -57,7 +57,8 @@ in the gamemanager directory.
 Changing Settings
 -----------------
 
-To change settings, create a file called "settings.py" in the gamemanager subdirectory. Example contents:
+To change settings, create a file called "settings.py" in the
+gamemanager subdirectory. Example contents:
 
 	users = {"pidart_username": "pidart_password"}
 	port = 8181
