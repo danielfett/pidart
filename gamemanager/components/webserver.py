@@ -12,6 +12,22 @@ import simplejson
 
 from events import *
 
+try:
+    from settings import users
+except ImportError:
+    users = {"pidart": "pidart"}
+
+try:
+    from settings import port
+except ImportError:
+    port = 8080
+
+try:
+    from settings import listen
+except ImportError:
+    listen = '0.0.0.0'
+
+
 class SendState(Event):
     pass
 
@@ -143,8 +159,7 @@ class Root(Controller):
         return 
 
     def xhr(self, *args, **kwargs):
-        realm = "eDarts"
-        users = {"infsec": "temp!?"}
+        realm = "pidart"
         encrypt = str
 
         if not check_auth(self.request, self.response, realm, users, encrypt):
@@ -190,7 +205,7 @@ class Root(Controller):
 
 class DartsWebServer(Server):
     def __init__(self):
-        Server.__init__(self, ('0.0.0.0', 8080))
+        Server.__init__(self, (listen, port))
         Static(docroot="../html/").register(self)
         DartsWSServer().register(self)
         DartsServerController().register(self)

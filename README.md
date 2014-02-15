@@ -1,4 +1,4 @@
-eDarts
+pidart
 ======
 
 Run the dart game by changing to the gamemanager subdirectory, then
@@ -54,6 +54,14 @@ used. To generate the sound files from the rules file, use
 
 in the gamemanager directory.
 
+Changing Settings
+-----------------
+
+To change settings, create a file called "settings.py" in the gamemanager subdirectory. Example contents:
+
+	users = {"pidart_username": "pidart_password"}
+	port = 8181
+	listen = '127.0.0.1'
 
 Installation on a Raspberry Pi
 ==============================
