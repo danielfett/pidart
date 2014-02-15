@@ -6,10 +6,11 @@ from circuits.web import Server, Controller, Logger, Static
 from circuits.net.sockets import write, connect
 from circuits.web.tools import check_auth, basic_auth
 from random import random
+from base64 import b64decode
  
 import simplejson
 
-from events import ReceiveInput, SkipPlayer, StartGame, ChangeLastRound, UpdateSettings, PerformSelfUpdate
+from events import ReceiveInput, SkipPlayer, StartGame, ChangeLastRound, UpdateSettings, PerformSelfUpdate, UndoLastFrame
 
 class SendState(Event):
     pass
@@ -152,7 +153,7 @@ class Root(Controller):
         if self.request.method != 'POST':
             return simplejson.dumps({'error':"Only method POST is allowed."})
             
-        data = simplejson.loads(self.request.body.read())
+        data = simplejson.loads(b64decode(self.request.body.read()))
         cmd = data['command']
         if cmd == 'skip-player':
             self.fireEvent(SkipPlayer(int(data['player'])))
@@ -177,6 +178,10 @@ class Root(Controller):
             self.fire(PerformSelfUpdate())
         elif cmd == 'cancel-game':
             self.fireEvent(ReceiveInput('generic', 'cancel_game'))
+        elif cmd == 'undo-last-frame':
+            player = int(data['player'])
+            self.fireEvent(UndoLastFrame(player))
+        
 
         return simplejson.dumps({'success': True})
 

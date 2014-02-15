@@ -62,3 +62,6 @@ class ErrorMessage(Event):
 
 class PerformSelfUpdate(Event):
     """ Command to update the running python file. """
+
+class UndoLastFrame(Event):
+    """ Remove a player's last frame from the history. """

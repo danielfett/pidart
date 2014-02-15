@@ -98,6 +98,11 @@ class Player(object):
         self.history[frame]['darts'] = newDarts
         self._recalculate_score()
 
+    def undo_last_frame(self):
+        if len(self.history) > 0:
+            self.history.pop()
+        self._recalculate_score()            
+
     def _recalculate_score(self):
         self.score = self.startvalue
         history = self.history
@@ -123,6 +128,7 @@ class GameState(object):
         self._update_ranks()
         self.id = gameid
         self.testgame = testgame
+        self.history = []
 
     def add_dart(self, dart, s):
         self.currentDarts.append(dart)
@@ -196,6 +202,10 @@ class GameState(object):
         self.players[player].change_history(frame, oldDarts, newDarts)
         self._update_ranks()
 
+    def undo_last_frame(self, player):
+        self.players[player].undo_last_frame()
+        self._update_ranks()
+
 class DartGame(Component):
     NUMBEROFDARTS = 3
     
@@ -229,7 +239,14 @@ class DartGame(Component):
             # so already earlier.                
             if self.state.prepare_next_player() == None:
                 self.gameover()
-
+                
+    def UndoLastFrame(self, player):
+        self.state.undo_last_frame(player)
+        if self.state.prepare_next_player() == None:
+            self.gameover()
+            return
+        self.fire(GameStateChanged(self.state))
+               
 
     def ChangeLastRound(self, player, oldDarts, newDarts):
         try:

@@ -111,6 +111,7 @@
 		  <span ng-if="p.last_frame.text"> = </span>
 		  <span class="darttext">{{p.last_frame.text}}</span> 
 		  <a href="" ng-click="startEditingDarts(p)"><i class="fa fa-edit" ng-if="! p.editingLastDarts"></i></a>
+		  <a href="" ng-click="undoLastFrame(p)"><i class="fa fa-times-circle" ng-if="! p.editingLastDarts"></i></a>
 		  <span ng-if="p.editingLastDarts">
 		    <input type="text" class="form-control" style="width:50%;" ng-model="p.lastDartsEdited">
 		    <a href="" ng-click="saveDarts(p)"><i class="fa fa-check"></i></a>

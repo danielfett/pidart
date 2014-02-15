@@ -81,7 +81,7 @@ var eloEngine = new function(){
 };
 
 function postxhr(data, onsuccess) {
-    $.post('xhr', JSON.stringify(data))
+    $.post('xhr', btoa(JSON.stringify(data))) // use base64 encoding due to some strange server bug
     .done(function(data) {
 	d = JSON.parse(data);
 	if (! d.success) {
@@ -157,10 +157,10 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	    if (e.target.hash == '#stats') {
 		$scope.$emit('resizeMsg');
 		$scope.updateChartFull();
-	    } 
+	    }
 	    if (e.target.hash == '#newgame') {
 		$scope.updateAvailablePlayers();
-	    } 	
+	    }
 	});
 	//window.setInterval($scope.updateChartFull, 1000 * 60 * 5);
 
@@ -241,7 +241,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	for (var i = 0; i < selectedPlayers.length; i ++) {
 	    players.push(selectedPlayers[i].name);
 	}
-	
+
 	var testing = '';
 	if (! official) {
 	    testing = '\n\nThis is an unofficial game (no logging enabled).';
@@ -388,7 +388,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	    .fail(function() {
 		$scope.chartUpdating = false;
 	    });
-	
+
     };
 
     $scope.addPlayer = function() {
@@ -447,9 +447,10 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	    return;
 	}
 	postxhr({
+            command: 'change-last-round',
 	    player: p.started,
 	    old_darts: p.last_frame.darts,
-	    new_darts: input.split(' ')
+	    new_darts: (input == '') ? [] : input.split(' ')
 	}, function(data) {
 	    p.editingLastDarts = false;
 	});
@@ -458,6 +459,19 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
     $scope.abortEditingDarts = function(p) {
 	p.editingLastDarts = false;
     }
+
+    $scope.undoLastFrame = function(p) {
+        if (confirm("Do you want to undo this player's last frame?")) {
+	    postxhr({
+                command: 'undo-last-frame',
+	        player: p.started
+	    }, function(data) {
+	           p.editingLastDarts = false;
+	       });
+	}
+
+    }
+
 
     // For debugging...
     $scope.onKeypress = function(ev) {
