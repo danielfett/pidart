@@ -10,7 +10,7 @@ from base64 import b64decode
  
 import simplejson
 
-from events import ReceiveInput, SkipPlayer, StartGame, ChangeLastRound, UpdateSettings, PerformSelfUpdate, UndoLastFrame
+from events import *
 
 class SendState(Event):
     pass
@@ -162,6 +162,9 @@ class Root(Controller):
             start = int(data['startvalue'])
             testgame = data['testgame']
             self.fireEvent(StartGame(players, start, testgame))
+        elif cmd == 'update-players':
+            players = data['players']
+            self.fireEvent(UpdatePlayers(players))
         elif cmd == 'change-last-round':
             player = int(data['player'])
             oldDarts = map(sanitize_input_dart, data['old_darts'])

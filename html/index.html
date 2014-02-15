@@ -154,16 +154,17 @@
 	  </div>
 	  
 	  <div class="row form-group"  style="margin-top: 1.75em;">
-	    <div class="col-md-2 col-md-offset-4">
+	    <div class="col-md-2">
 	      Initial points:
 	    </div>
 	    <div class="col-md-2">
 	      <input class="form-control" type="number" value="301" min="1" max="1001" id="initialValue" ng-model="initialValue">
 	    </div>
-	    <div class="col-md-4" style="valign: bottom">
+	    <div class="col-md-8" style="valign: bottom; text-align:right;">
 	      <input class="btn btn-primary" type="submit" value="start new game" ng-click="newGame(true)">
-	      <input class="btn btn-default" type="submit" value="start test game" ng-click="newGame(false)">
-	      <input class="btn btn-default" type="submit" value="cancel game" ng-click="cancelGame()" ng-hide="state.state != 'playing'">
+	      <input class="btn btn-default" type="submit" value="change current players" ng-click="updatePlayers()" ng-hide="state.state != 'playing' && state.state != 'hold'">
+	      <input class="btn btn-default" type="submit" value="cancel game" ng-click="cancelGame()" ng-hide="state.state != 'playing' && state.state != 'hold'">
+	      <input class="btn btn-warning" type="submit" value="start test game" ng-click="newGame(false)" ng-hide="!debugging">
 	    </div>
 	  </div>
 	</div>

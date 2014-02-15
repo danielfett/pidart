@@ -260,6 +260,28 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	}
     };
 
+    $scope.updatePlayers = function() {
+        var selectedPlayers = [];
+	for (p in $scope.availablePlayers) {
+	    if ($scope.availablePlayers[p].selected) {
+		selectedPlayers.push($scope.availablePlayers[p]);
+	    }
+	}
+	selectedPlayers.sort(function(a,b){return a.rank-b.rank});
+	if (selectedPlayers.length < 2) {
+	    alert("Please select at least two players.");
+	    return;
+	}
+	var players = [];
+	for (var i = 0; i < selectedPlayers.length; i ++) {
+	    players.push(selectedPlayers[i].name);
+	}
+	postxhr({
+	    command: 'update-players',
+	    players: players
+	});
+    }
+
     $scope.updateChartFull = function() {
 	if (! $scope.state.players) {
 	    return;

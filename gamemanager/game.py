@@ -206,6 +206,27 @@ class GameState(object):
         self.players[player].undo_last_frame()
         self._update_ranks()
 
+    """
+    Gets a list of names of players and changes the list of players in
+    the current game accordingly by adding or removing players if
+    needed. Returns true if the current player has left the game.
+
+    """
+    def update_players(self, players):
+        newPlayers = []
+        for name in players:
+            for existing in self.players:
+                if existing.name == name:
+                    existing.index = len(newPlayers)
+                    newPlayers.append(existing)
+                    break
+            else:
+                newPlayers.append(Player(name, len(newPlayers), self.startvalue))
+        self.players = newPlayers
+        self._update_ranks()
+
+        return self.currentPlayer not in newPlayers
+            
 class DartGame(Component):
     NUMBEROFDARTS = 3
     
@@ -247,16 +268,25 @@ class DartGame(Component):
             return
         self.fire(GameStateChanged(self.state))
                
-
     def ChangeLastRound(self, player, oldDarts, newDarts):
         try:
             self.state.change_player_history(player, -1, oldDarts, newDarts)
             if self.state.prepare_next_player() == None:
                 self.gameover()
                 return
+            elif self.state.state == 'gameover':
+                self.start_frame()
             self.fire(GameStateChanged(self.state))
         except ValueError, e:
             print e
+
+    def UpdatePlayers(self, players):
+        if self.state.update_players(players) and \
+           self.state.state == 'playing':
+            self.finish_frame(hold=False, cancel=True)   
+        else:
+            self.fire(GameStateChanged(self.state))
+        
 
     def ReceiveInput(self, source, value):
         print ("State is %s, input is %r from %r" % (self.state.state, value, source))

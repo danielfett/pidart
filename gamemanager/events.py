@@ -65,3 +65,6 @@ class PerformSelfUpdate(Event):
 
 class UndoLastFrame(Event):
     """ Remove a player's last frame from the history. """
+
+class UpdatePlayers(Event):
+    """ Change list of current players. """
