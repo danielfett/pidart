@@ -48,9 +48,11 @@ Generating Sound File Cache
 ---------------------------
 
 Sound files are cached. Without the cache, the ISAT sounds cannot be
-used. To generate the sound files from the rules file, use
+used. To generate the sound files from the rules file, install MARY
+TTS system, install the voice cmu-rms-hsmm, and start the
+server. Then, use
 
-    python -m isat.generate_rules
+    python -m isat.generate_cache http://localhost:59125/process
 
 in the gamemanager directory.
 
