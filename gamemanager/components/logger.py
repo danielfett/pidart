@@ -42,7 +42,7 @@ class Logger(Component):
     def FrameStarted(self, state):
         self.file.write('| (%s) ' % state.currentPlayer.name)
 
-    def GameOver(self, state):
+    def GameOver(self, state, *args):
         self.finish()
 
 
@@ -94,7 +94,7 @@ class DetailedLogger(Component):
         self.cursor.execute('INSERT INTO throws (games_id, player, frame, dart, code, before, timestamp) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)', args)
 
     @handler('GameOver', 'HitWinner', priority=-1)
-    def GameOver(self, state):
+    def GameOver(self, state, *args):
         if state.testgame:
             return
         self.conn.commit()

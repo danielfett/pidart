@@ -74,7 +74,7 @@ class TestFullGame(unittest.TestCase):
         # check to see if the detailed logger worked
         num_games, num_throws = dl.get_num_rows()
         self.assertEquals(num_games, 1)
-        self.assertEquals(num_throws, 19)
+        self.assertEquals(num_throws, 25)
 
     def test_run(self):
         p = Popen(['./game.py', '--dev', 'none', '--file', self.TESTFILE, '--nolog', '--test', '--one-game', '--snd', 'none'], stdout=PIPE, stderr=PIPE)
