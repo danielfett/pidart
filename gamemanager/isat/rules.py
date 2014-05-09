@@ -247,11 +247,11 @@ def hit_winner(state):
         score_before, score_after = convenience(state)
     num_before = len(state.winners()) # players that checked out before
     rules = [
-        {
-            'use': num_before == 0,
-            'text': 'checked_out_winner',
-            'weight': 50
-            },
+#        {
+#            'use': num_before == 0,
+#            'text': 'checked_out_winner',
+#            'weight': 50
+#            },
         
         {
             'use': num_before == 0,
