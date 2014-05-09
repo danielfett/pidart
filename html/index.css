@@ -85,3 +85,22 @@ body {
 .dart.single:before {
     content:"·";
 }
+
+#ajax-loader {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    margin-left: -21px;
+    
+}
+
+#debugbox {
+    background-color: #c0c0c0;
+    border-radius: 7px;
+    position: fixed;
+    width: 250px;
+    right: 50px;
+    top: 30px;
+    padding: 10px;
+    z-index: 10000;
+}

@@ -1,9 +1,12 @@
-from circuits import Component
-from events import ReceiveInput
-from circuits.io.serial import Serial
-from circuits.io.file import File
+from circuits import Component, Event
+from events import ReceiveInput, StartGame
+from circuits.io import Serial, File, Process
 from codes import FIELDCODES
+from time import sleep
 
+
+class FireInput(Event):
+    pass
 
 class DartInput(Component):
     channel = 'serial'
@@ -14,6 +17,7 @@ class DartInput(Component):
                baudrate = 115200, 
                bufsize = 1, 
                timeout = 0).register(self)
+        print "Reading from serial device %s" % device
         
     def read(self, data):
         for b in data:
@@ -25,26 +29,30 @@ class DartInput(Component):
                 raise Exception("Unknown fieldcode: %x" % inp)
 
 class FileInput(Component):
-    def __init__(self, f):
+    def __init__(self, f, delay = 3):
         super(FileInput, self).__init__()
         with open(f, 'r') as infile:
             self.data = infile.read().split(' ')
         players = self.data[0].split(':')[1].split(',')
-        self.fire(StartGame(players))
+        self.fire(StartGame(players, 301, False))
+        self.pointer = None
+        self.delay = delay
 
-    def GameInitialized(self, state):
-        for s in self.data[1:]:
-            if s.startswith('('): # this is a comment, so ignore.
-                pass
-            elif s == '|': # next player
+    def GameInitialized(self, *args):
+        self.pointer = 1
+    
+    def generate_events(self, *args):
+        if self.pointer != None and self.pointer < len(self.data):
+            s = self.data[self.pointer]
+            while s.startswith('('): # this is a comment, so ignore.
+                self.pointer += 1
+                s = self.data[self.pointer]
+            if s == '|': # next player
                 self.fire(ReceiveInput('generic', 'next_player'))
             else:
                 self.fire(ReceiveInput('code', s))
-
-
-'''
-class FakeInput(object):
-    def read(self):
-        inp = raw_input("? ").strip().upper()
-        return inp
-'''
+            self.pointer += 1
+            print "Generating input event"
+        elif self.pointer >= len(self.data):
+            self.unregister()
+            print "Stopping"

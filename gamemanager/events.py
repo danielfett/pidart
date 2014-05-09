@@ -44,3 +44,27 @@ class GameOver(Event):
 
 class ManualNextPlayer(Event):
     """ Manual request to advance to next player """
+
+class ChangeLastRound(Event):
+    """ Change the history (last round) of the player. """
+
+class GameStateChanged(Event):
+    """ Something (general) in the player's history changed. """
+
+class UpdateSettings(Event):
+    """ Set come config """
+
+class SettingsChanged(Event):
+    """ Something in the config has changed, new config is attached. """
+
+class ErrorMessage(Event):
+    """ Some general error occured. """
+
+class PerformSelfUpdate(Event):
+    """ Command to update the running python file. """
+
+class UndoLastFrame(Event):
+    """ Remove a player's last frame from the history. """
+
+class UpdatePlayers(Event):
+    """ Change list of current players. """

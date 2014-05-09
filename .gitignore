@@ -1,0 +1,7 @@
+*.pyc
+*.dartlog
+__pycache__
+darts.db
+sounds/cached-mary/*.wav
+*~
+*/#*#
