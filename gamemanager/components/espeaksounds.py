@@ -8,7 +8,7 @@ from namemapping import name_mapping
 class EspeakSounds(Component):
     def __init__(self, test=False):
         super(EspeakSounds, self).__init__()
-        espeak.set_voice('en/en-sc')
+        espeak.set_voice('en-us')
         if test:
             espeak.set_parameter(espeak.Parameter.Volume, 0)
         self.say("Ready.")
