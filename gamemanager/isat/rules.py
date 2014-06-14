@@ -201,7 +201,7 @@ def hit(state):
         
         # add the all-famous washing machine(s).
         {
-            'use': in_ring(darts_so_far),
+            'use': (dart_num == 3) and in_ring(darts_so_far),
             'text': 'washing_machine',
             'weight': 150
             },
