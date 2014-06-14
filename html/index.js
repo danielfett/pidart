@@ -1,5 +1,6 @@
 
 var usualSuspects = ['DF', 'ES', 'GS', 'OC', 'RK', 'TT'];
+var dartenbankAddress = 'http://infsec.uni-trier.de/dartenbank';
 
 function fitText() {
     var divisors = [4, 6, 12, 18];
@@ -149,7 +150,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 
     $scope.chart = history;
 
-    var wsuri = window.location.href.replace(/^http(s?:\/\/[^/:]*)(:\d+)?\/.*$/, 'ws$1:8080/websocket');
+    var wsuri = window.location.href.replace(/^http(s?:\/\/[^/]*)\/.*$/, 'ws$1/websocket');
     $scope.sock = new ReconnectingWebSocket(wsuri);
 
     $(document).ready(function() {
@@ -287,7 +288,7 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	    return;
 	}
 	$scope.chartUpdating = true;
-	$.ajax('http://infsec.uni-trier.de/dartenbank/rpc/elo.php?count=30', {
+	$.ajax(dartenbankAddress + '/rpc/elo.php?count=30', {
 	    dataType: 'JSON'
 	})
 	    .done(function(data) {
@@ -372,16 +373,16 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 	    ranking[info['name']] = info['rank'] + 1;
 	});
 	urlparam = encodeURIComponent(JSON.stringify(ranking));
-	window.open('http://infsec.uni-trier.de/dartenbank/input/remote-input.php?standings=' + urlparam);
+	window.open(dartenbankAddress + '/input/remote-input.php?standings=' + urlparam);
     }
 
     $scope.updateAvailablePlayers = function() {
 	$scope.chartUpdating = true;
-	$.ajax('http://infsec.uni-trier.de/dartenbank/rpc/get-players.php', {
+	$.ajax(dartenbankAddress + '/rpc/get-players.php', {
 	    dataType: 'JSON'
 	})
 	    .done(function(data) {
-		$.ajax('http://infsec.uni-trier.de/dartenbank/rpc/elo.php?count=1', {
+		$.ajax(dartenbankAddress + '/rpc/elo.php?count=1', {
 		    dataType: 'JSON'
 		})
 		    .done(function(rankdata) {
