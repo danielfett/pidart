@@ -12,9 +12,16 @@ class Logger(Component):
     def __init__(self, test=False):
         Component.__init__(self)
         self.test = test
+        self.file = None
+
+    def finish(self):
+        if self.file is None:
+            return
+        self.file.close()
 
     def GameInitialized(self, state):
         print ("Logger started.")
+        self.finish()
         if state.testgame or self.test:
             self.file = TemporaryFile()
         else:
@@ -34,6 +41,9 @@ class Logger(Component):
 
     def FrameStarted(self, state):
         self.file.write('| (%s) ' % state.currentPlayer.name)
+
+    def GameOver(self, state, *args):
+        self.finish()
 
 
 class DetailedLogger(Component):
@@ -69,7 +79,7 @@ class DetailedLogger(Component):
         self.cursor.execute('BEGIN TRANSACTION')
         self.cursor.execute('INSERT INTO games (id, startvalue, date) VALUES (?, ?, CURRENT_TIMESTAMP)', args)
 
-    @handler('Hit', priority=-1)
+    @handler('Hit', 'HitWinner', 'HitBust', priority=-1)
     def Hit(self, state, code):
         if state.testgame:
             return
@@ -83,8 +93,8 @@ class DetailedLogger(Component):
             )
         self.cursor.execute('INSERT INTO throws (games_id, player, frame, dart, code, before, timestamp) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)', args)
 
-    @handler('GameOver', priority=-1)
-    def GameOver(self, state):
+    @handler('GameOver', 'HitWinner', priority=-1)
+    def GameOver(self, state, *args):
         if state.testgame:
             return
         self.conn.commit()
