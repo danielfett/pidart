@@ -3,7 +3,7 @@ Define rules & strings that the Text-To-Speech engine outputs.
 '''
 
 from isat.tools import fieldtexts 
-from darttools import convenience, remove_suffix, mod, num, score2sum, singledart_checkoutable, in_ring
+from darttools import *
 from operator import or_
 
 '''Texts that are prepared and can be used later are stored in
@@ -164,7 +164,7 @@ def hit(state):
             'use': coo != None and \
                 reduce(or_, map(lambda x: adjacent(dart,x), coo)),
             'text': 'close',
-            'weigth': 100,
+            'weight': 100
             },
         # add the default field code text with a weight of 50
         {
@@ -201,7 +201,7 @@ def hit(state):
         
         # add the all-famous washing machine(s).
         {
-            'use': in_ring(darts_so_far),
+            'use': len(darts_so_far) == 3 and in_ring(darts_so_far),
             'text': 'washing_machine',
             'weight': 150
             },
