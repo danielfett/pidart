@@ -69,7 +69,7 @@ gamemanager subdirectory. Example contents:
 Installation on a Raspberry Pi
 ==============================
 
-sudo apt-get install python-dev python-espeak sox mercurial
-hg clone https://bitbucket.org/webhamster/circuits-dev
-cd circuits-dev
-sudo python setup.py install
+    sudo apt-get install python-dev python-espeak sox mercurial
+    hg clone https://bitbucket.org/webhamster/circuits-dev
+    cd circuits-dev
+    sudo python setup.py install
