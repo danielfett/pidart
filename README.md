@@ -1,6 +1,30 @@
 pidart
 ======
 
+See LICENSE.txt for the license that applies to the source code.
+
+Installation (on a Raspberry Pi)
+--------------------------------
+
+    sudo apt-get install python-dev python-espeak sox mercurial
+    hg clone https://bitbucket.org/webhamster/circuits-dev
+    cd circuits-dev
+    sudo python setup.py install
+
+Changing Settings
+-----------------
+
+To change settings, create a file called "settings.py" in the
+gamemanager subdirectory. Example contents:
+
+	users = {"pidart_username": "pidart_password"}
+	port = 8181
+	listen = '127.0.0.1'
+
+
+Running
+-------
+
 Run the dart game by changing to the gamemanager subdirectory, then
 execute
 
@@ -55,21 +79,3 @@ server. Then, use
     python -m isat.generate_cache http://localhost:59125/process
 
 in the gamemanager directory.
-
-Changing Settings
------------------
-
-To change settings, create a file called "settings.py" in the
-gamemanager subdirectory. Example contents:
-
-	users = {"pidart_username": "pidart_password"}
-	port = 8181
-	listen = '127.0.0.1'
-
-Installation on a Raspberry Pi
-==============================
-
-    sudo apt-get install python-dev python-espeak sox mercurial
-    hg clone https://bitbucket.org/webhamster/circuits-dev
-    cd circuits-dev
-    sudo python setup.py install
