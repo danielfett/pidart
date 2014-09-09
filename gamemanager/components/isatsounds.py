@@ -12,6 +12,7 @@ from isat.tools import isat_filename
 from isat.rules import texts, hit, hit_bust, hit_winner
 
 from darttools import singledart_checkoutable
+from darttools import checkoutable
 
 class ISATSounds(Component):
     SOUND_BASE = '../sounds/old-%s.wav'
@@ -90,29 +91,32 @@ class ISATSounds(Component):
                 self.music = None
             return
         score = state.currentPlayer.score - state.currentScore
-        if len(state.currentDarts) == 3 and score > 0:
+        remainingdarts = 3 - len(state.currentDarts)
+        if remainingdarts == 0 and score > 0:
             # This was the last dart, we don't change the music now.
             return
         
-        checkoutable = singledart_checkoutable(score)
+        is_sdcheckoutable = singledart_checkoutable(score)
+        print is_sdcheckoutable
+        is_checkoutable = checkoutable(score,remainingdarts)
+        print is_checkoutable
 
-        if score > 180:
+        if is_checkoutable:
+            if is_sdcheckoutable:
+                 self._play_music(self.MUSIC[2])
+                 pygame.mixer.music.set_volume(1.0)
+            else:
+                self._play_music(self.MUSIC[1])
+                if score > 60:
+                    pygame.mixer.music.set_volume(0.6)
+                else:
+                    pygame.mixer.music.set_volume(0.85)
+        else:
+            print self.MUSIC[0]
             self._play_music(self.MUSIC[0])
-        # TODO: move the following check to the tools
-        elif checkoutable: 
-            # score is single-dart-checkoutable
-            self._play_music(self.MUSIC[2])
-        else:
-            self._play_music(self.MUSIC[1])
-
-        if checkoutable:
-            pygame.mixer.music.set_volume(1.0)
-        elif score > 180:
             pygame.mixer.music.set_volume(0.4)
-        elif score > 60:
-            pygame.mixer.music.set_volume(0.6)
-        else:
-            pygame.mixer.music.set_volume(0.85)
+            
+
 
     def _play_music(self, f):
         if self.music == f:
