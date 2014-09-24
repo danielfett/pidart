@@ -60,6 +60,8 @@ texts = {
                  ('A Nice one!', 'amused'),
                  ('The one and only one!', 'interested')],
 
+    'triple_1': 'wav:others/gasp_x',
+
     # texts for two darts
     'again': ('And again!', 'happy'),
 
@@ -176,12 +178,24 @@ def hit(state):
             'text': 'low_start',
             'weight': 20,
             },
+        {
+            'use': (dart == 'T1' or dart == 'T2' or dart == 'T3') and score_before > 50,
+            'text': 'triple_1',
+            'weight': 50
+            },
         # check if the player missed by one field
         {
             'use': coo != None and \
                 reduce(or_, map(lambda x: adjacent(dart,x), coo)),
             'text': 'close',
             'weight': 100
+            },
+        {
+            'use': coo != None and \
+                reduce(or_, map(lambda x: adjacent(dart,x), coo)) and\
+                singledart_checkoutable(score_after),
+            'text': 'check_out_still_possible',
+            'weight': 150
             },
         # add the default field code text with a weight of 50
         {
@@ -216,12 +230,6 @@ def hit(state):
             'text': 'good_check_out',
             'weight': 20
             },
-        # checkout still possible
-        {
-            'use': singledart_checkoutable(score_before) and singledart_checkoutable(score_after),
-            'text': 'check_out_still_possible',
-            'weight': 20
-            },
         
         # add the all-famous washing machine(s).
         {
@@ -245,7 +253,7 @@ def hit(state):
             'weight': 300
             },
         {
-            'use': len(darts_so_far) == 2 and adjacent(darts_so_far[0], darts_so_far[1]),
+            'use': len(darts_so_far) == 2 and in_ring(darts_so_far),
             'text': 'going_for_washing_machine',
             'weight': 150
             },

@@ -398,9 +398,16 @@ angular.module('darts', ['googlechart']).controller('DartCtrl', function ($scope
 			    if (typeof(ranking[name]) != 'undefined') {
 				rank = ranking[name];
 			    }
-		    var selected = (lastPlayers.indexOf(name) > -1) || (usualSuspects.indexOf(name) > -1);
+			    var selected = (lastPlayers.indexOf(name) > -1) || (usualSuspects.indexOf(name) > -1);
+			    if (lastPlayers.indexOf(name) > -1) {
+				lastPlayers.splice(lastPlayers.indexOf(name), 1);
+			    }
 			    $scope.availablePlayers.push({name: name, games: games, rank:rank, selected:selected});
 			});
+			$.each(lastPlayers, function(i, name) {
+			    $scope.availablePlayers.push({name: name, games: 0, rank:1500, selected:true});
+			});
+			
 			$scope.chartUpdating = false;
 			$scope.$apply();
 		    })
