@@ -71,7 +71,7 @@ texts = {
     'triple_washing_machine': ('Triple washing machine!', 'happy'),
     'highest_washing_machine': ('Highest possible washing machine!', 'happy'),
     'triple_triple_20': 'wav:others/hallelujah-trail',
-    'going_for_washing_machine': ('Going for a washing machine', 'pleased'),
+    'going_for_washing_machine': ('Going for a washing machine?', 'interested'),
 
     # text for checkout zone
     'checkout_area': ('Welcome to checkout area!', 'happy'),
@@ -204,9 +204,9 @@ def hit(state):
             'weight': 50
             },
         {
-            'use': True,
+            'use': dart == 'S25' or dart == 'D25',
             'text': 'boing',
-            'weight': 2
+            'weight': 150
                 },
 
         # add two simple rules for the single one field.
@@ -226,7 +226,7 @@ def hit(state):
 
         # good check out position
         {
-            'use': score_after > 11 and score_after < 21,
+            'use': score_after > 11 and score_after < 21 and dart_num < 3,
             'text': 'good_check_out',
             'weight': 20
             },
@@ -255,7 +255,7 @@ def hit(state):
         {
             'use': len(darts_so_far) == 2 and in_ring(darts_so_far),
             'text': 'going_for_washing_machine',
-            'weight': 150
+            'weight': 40
             },
 
         # Just a lot of points...
@@ -279,7 +279,7 @@ def hit(state):
                 
 
         {
-            'use': darts_so_far == ['T20' * 3],
+            'use': dart_num == 3 and darts_so_far[0] == 'T20' and darts_so_far[1] == 'T20' and darts_so_far[2] == 'T20',
             'text': 'triple_triple_20',
             'weight': 100000
             },
