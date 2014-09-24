@@ -44,18 +44,21 @@ texts = {
     'good_choice': ('Excellent choice', 'pleased'),
     'train': ('Did you train for that?', 'pleased'),
     'same_three_darts': ('What a boring choice.', 'bored'),
-    'less_than_10': ('#Jung qvq lbh qbb?', 'disappointed'),
-    'less_than_10_alt_1': ('#Hu-bu.', 'disappointed'),
-    'less_than_3': ('Great.', 'disappointed'),
-    'less_than_3_alt_1': ('That will be fun.', 'disappointed'),
+    'less_than_10': [('#Jung qvq lbh qbb?', 'disappointed'),
+                     ('#Hu-bu.', 'disappointed')],
+    'less_than_3': [('Great.', 'disappointed'),
+                    ('That will be fun.', 'disappointed'),
+                    'wav:others/ahem_x',
+                    'wav:others/gasp_x'
+                    ],
     'close': ('That was close!', 'happy'),
 
     'low_start': ('Just take your time.', 'bored'),
 
     # texts for a single dart
-    'single_1': ('The right one!', 'excited'),
-    'single_1_alt_1': ('A Nice one!', 'amused'),
-    'single_1_es': ('The one and only one!', 'interested'),
+    'single_1': [('The right one!', 'excited'),
+                 ('A Nice one!', 'amused'),
+                 ('The one and only one!', 'interested')],
 
     # texts for two darts
     'again': ('And again!', 'happy'),
@@ -64,7 +67,9 @@ texts = {
     'washing_machine': ('Washing machine!', 'happy'),
     'double_washing_machine': ('Double washing machine!', 'happy'),
     'triple_washing_machine': ('Triple washing machine!', 'happy'),
-    'triple_20': 'wav:others/hallelujah-trail',
+    'highest_washing_machine': ('Highest possible washing machine!', 'happy'),
+    'triple_triple_20': 'wav:others/hallelujah-trail',
+    'going_for_washing_machine': ('Going for a washing machine', 'pleased'),
 
     # text for checkout zone
     'checkout_area': ('Welcome to checkout area!', 'happy'),
@@ -75,7 +80,6 @@ texts = {
     'checked_out_winner': 'wav:wwm/spielende',
     'checked_out_winner_2': 'wav:others/hallelujah-trail',
     #'checked_out': ('Checked out!', 'happy'),
-    'checked_out': 'wav:wwm/richtig_stufe_2',
     
     # texts for hit_bust
     'bust': ('Bust!', 'amused'),
@@ -88,6 +92,29 @@ texts = {
     'pull_up': 'wav:aviation/pull-up',
     'pull_up_2': 'wav:aviation/terrain-ahead-pull-up',
     'zonk': 'wav:zonk',
+
+    # high points
+    'high_triple': ['wav:others/cash_register2', 'wav:others/cash_register_x'],
+    'over_100': ['wav:others/applause2_x', 'wav:others/applause3', 'wav:others/cheering'],
+    
+    # generic',
+    'boing': ['wav:others/boing_x',
+              'wav:others/arrow2',
+              'wav:others/arrow_x',
+              'wav:others/boing2',
+              'wav:others/boing3'],
+
+    # checkout',
+    'checked_out': ['wav:others/fanfare3',
+                    'wav:others/fanfare_x',
+                    'wav:others/fanfare2'],
+
+    # good check-out position',
+    'good_check_out': ['wav:others/drum_roll2',
+                       'wav:others/drum_roll_y'],
+
+    'check_out_still_possible': 'wav:others/gasp_ohhh',
+                 
 }
 
 '''
@@ -136,23 +163,13 @@ def hit(state):
         {
             'use': score_after < 10 and len(darts_so_far) == 3,
             'text': 'less_than_10',
-            'weight': 50,
-            },
-        {
-            'use': score_after < 10 and len(darts_so_far) == 3,
-            'text': 'less_than_10_alt_1',
-            'weight': 50,
+            'weight': 100,
             },
 
         {
             'use': score_after < 3 and len(darts_so_far) == 3,
             'text': 'less_than_3',
-            'weight': 50,
-            },
-        {
-            'use': score_after < 3 and len(darts_so_far) == 3,
-            'text': 'less_than_3_alt_1',
-            'weight': 50,
+            'weight': 200,
             },
         {
             'use': score_after > 200 and len(darts_so_far) == 1 and (score_before - score_after) < 10,
@@ -172,25 +189,19 @@ def hit(state):
             'text': 'code_%s' % dart,
             'weight': 50
             },
+        {
+            'use': True,
+            'text': 'boing',
+            'weight': 2
+                },
 
         # add two simple rules for the single one field.
         {
             'use': dart == 'S1',
             'text': 'single_1',
-            'weight': 30
+            'weight': 90
             },
 
-        {
-            'use': dart == 'S1',
-            'text': 'single_1_alt_1',
-            'weight': 30
-            },
-
-        {
-            'use': dart == 'S1',
-            'text': 'single_1_es',
-            'weight': 30
-            },
 
         # say 'and again' when the same dart is hit again
         {
@@ -198,11 +209,44 @@ def hit(state):
             'text': 'again',
             'weight': 100
             },
+
+        # good check out position
+        {
+            'use': score_after > 11 and score_after < 21,
+            'text': 'good_check_out',
+            'weight': 20
+            },
+        # checkout still possible
+        {
+            'use': singledart_checkoutable(score_before) and singledart_checkoutable(score_after),
+            'text': 'check_out_still_possible',
+            'weight': 20
+            },
         
         # add the all-famous washing machine(s).
         {
-            'use': len(darts_so_far) == 3 and in_ring(darts_so_far),
+            'use': len(darts_so_far) == 3 and in_ring(darts_so_far) and [mod(darts_so_far[x]) for x in range(3)] == ['S' * 3],
             'text': 'washing_machine',
+            'weight': 150
+            },
+        {
+            'use': len(darts_so_far) == 3 and in_ring(darts_so_far) and [mod(darts_so_far[x]) for x in range(3)] == ['D' * 3],
+            'text': 'double_washing_machine',
+            'weight': 150
+            },
+        {
+            'use': len(darts_so_far) == 3 and in_ring(darts_so_far) and [mod(darts_so_far[x]) for x in range(3)] == ['T' * 3],
+            'text': 'triple_washing_machine',
+            'weight': 150
+            },
+        {
+            'use': 'S19' in darts_so_far and 'S7' in darts_so_far and 'S16' in darts_so_far,
+            'text': 'highest_washing_machine',
+            'weight': 300
+            },
+        {
+            'use': len(darts_so_far) == 2 and adjacent(darts_so_far[0], darts_so_far[1]),
+            'text': 'going_for_washing_machine',
             'weight': 150
             },
 
@@ -214,15 +258,33 @@ def hit(state):
             },
 
         {
-            'use': singledart_checkoutable(score_after),
+            'use': singledart_checkoutable(score_after) and score_after > 20,
             'text': 'checkout_single',
             'weight': 100
+            },
+
+        {
+            'use': dart in ['T20', 'T19', 'T18', 'T17'],
+            'text': 'high_triple',
+            'weight': 70
+                },
+                
+
+        {
+            'use': darts_so_far == ['T20' * 3],
+            'text': 'triple_triple_20',
+            'weight': 100000
             },
 
         # over 100
         {
             'use': (len(darts_so_far) == 3) and (score_before_frame - score_after) >= 100,
             'text': 'score_%s' % (score_before_frame - score_after),
+            'weight': 150
+            },
+        {
+            'use': (score_before_frame - score_after) >= 100,
+            'text': 'over_100',
             'weight': 150
             },
 

@@ -1,5 +1,6 @@
 from os.path import join
 import codecs
+from re import sub
 
 def rot13(s):
     return codecs.encode(s, 'rot_13')
@@ -17,7 +18,9 @@ Get the name of the audio file for given text id.
 '''
 def isat_filename(text_id, text_desc):
     if type(text_desc) == tuple:
-        return join(text_dir, tts_dir, "%s.wav" % text_id)
+        cleaned_text = sub(r"""[^a-zA-Z0-9]""", '_', text_desc[0])
+        cleaned_emotion = sub(r"""[^a-zA-Z0-9]""", '_', text_desc[1])
+        return join(text_dir, tts_dir, "%s-%s.wav" % (cleaned_text, cleaned_emotion))
     elif type(text_desc) == str:
         if text_desc.startswith('wav:'):
             return join(text_dir, wav_dir, "%s.wav" % text_desc[4:])

@@ -5,7 +5,7 @@ Output different sound files depending on the game situation.
 from circuits import Component
 from time import sleep
 import pygame
-from random import randint
+from random import randint, choice
 from os.path import exists
 
 from isat.tools import isat_filename
@@ -51,13 +51,23 @@ class ISATSounds(Component):
             
         self.sounds_tts = {}
         for id, sound in texts.items():
-            f = isat_filename(id, sound)
-            if not exists(f):
-                raise Exception("File does not exist: %s" % f)
-            self.sounds_tts[id] = pygame.mixer.Sound(f)
-            self.sounds_tts[id].set_volume(volume)
+            if type(sound) == list:
+                for s in sound:
+                    self._read_sound_file(id, s, volume)
+            else:
+                self._read_sound_file(id, sound, volume)
         self._say('ready')
 
+    def _read_sound_file(self, id, descr, volume):
+        f = isat_filename(id, descr)
+        if not exists(f):
+            raise Exception("File does not exist: %s" % f)
+        s = pygame.mixer.Sound(f)
+        s.set_volume(volume)
+        if id not in self.sounds_tts:
+            self.sounds_tts[id] = []
+        self.sounds_tts[id].append(s)
+            
     def _play(self, sound):
         #while pygame.mixer.get_busy():
         #    sleep(0.1)
@@ -67,7 +77,8 @@ class ISATSounds(Component):
         print "Saying %s" % text_id
         while pygame.mixer.get_busy():
             sleep(0.05)
-        self.sounds_tts[text_id].play()
+        
+        choice(self.sounds_tts[text_id]).play()
 
     def _say_from_rule(self, rules, alt):
         try:

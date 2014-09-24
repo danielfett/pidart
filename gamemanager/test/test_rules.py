@@ -47,12 +47,19 @@ class TestTexts(unittest.TestCase):
         for key, pair in texts.items():
             self.assertEquals(type(key), str)
             self.assertNotIn('/', key)
-            self.assertIn(type(pair), [str, tuple])
-            if type(pair) == str:
-                self.assertEquals(pair[0:4], 'wav:')
+            self.assertIn(type(pair), [str, tuple, list])
+            if type(pair) == list:
+                for p in pair:
+                    self._test_sound(key, p)
             else:
-                self.assertEquals(len(pair), 2)
-                text, emotion = pair
-                self.assertEquals(type(text), str)
-                self.assertIn(emotion, self.emotions)
-            self.assertEquals(exists(isat_filename(key, pair)), True)
+                self._test_sound(key, pair)
+
+    def _test_sound(self, key, pair):
+        if type(pair) == str:
+            self.assertEquals(pair[0:4], 'wav:')
+        else:
+            self.assertEquals(len(pair), 2)
+            text, emotion = pair
+            self.assertEquals(type(text), str)
+            self.assertIn(emotion, self.emotions)
+        self.assertEquals(exists(isat_filename(key, pair)), True)

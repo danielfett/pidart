@@ -41,6 +41,15 @@ def convert_sample_rate(infile, outfilename):
 '''
 Generate cached voices.
 '''
+
+def generate_wav_file(server, id, text):
+    print "Text: '''%s'''" % text[0]
+    data = urlencode(mary_params(*text))
+    req = Request(server, data)
+    response = urlopen(req)
+    outfile = isat_filename(id, text)
+    convert_sample_rate(response, outfile)
+        
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generates a cache of rendered TTS audio files for later usage. Automatically caches all texts in the rules.py file. Needs a MaryTTS server for generating the audio and SOX must be installed to convert the audio files.')
     parser.add_argument('server', metavar='server_url', type=str, help='MaryTTS web server URL, e.g. http://localhost:59125/process', default='http://localhost:59125/process')
@@ -50,13 +59,18 @@ if __name__ == '__main__':
 
     print "Using server URL %s." % args.server
     for id, text in texts.items():
-        if type(text) != tuple:
-            continue
-        print "Text: '''%s'''" % text[0]
-        data = urlencode(mary_params(*text))
-        req = Request(args.server, data)
-        response = urlopen(req)
-        outfile = isat_filename(id, text)
-        convert_sample_rate(response, outfile)
         
+        if type(text) == list:
+            for t in text:
+                if type(t) != tuple:
+                    continue
+                generate_wav_file(args.server, id, t)
+        elif type(text) != tuple:
+            continue
+        else:
+            generate_wav_file(args.server, id, text)            
+        
+
+
+
     

@@ -1,5 +1,5 @@
 
-var usualSuspects = ['DF', 'ES', 'GS', 'OC', 'RK', 'TT'];
+var usualSuspects = ['DF', 'ES', 'GS', 'DR', 'RK', 'TT'];
 var dartenbankAddress = 'http://infsec.uni-trier.de/dartenbank';
 
 function fitText() {
