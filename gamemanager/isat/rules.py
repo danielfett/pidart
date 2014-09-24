@@ -228,7 +228,7 @@ def hit(state):
         {
             'use': score_after > 11 and score_after < 21 and dart_num < 3,
             'text': 'good_check_out',
-            'weight': 20
+            'weight': 50
             },
         
         # add the all-famous washing machine(s).
@@ -279,7 +279,7 @@ def hit(state):
                 
 
         {
-            'use': dart_num == 3 and darts_so_far[0] == 'T20' and darts_so_far[1] == 'T20' and darts_so_far[2] == 'T20',
+            'use': len(darts_so_far) == 3 and darts_so_far[0] == 'T20' and darts_so_far[1] == 'T20' and darts_so_far[2] == 'T20',
             'text': 'triple_triple_20',
             'weight': 100000
             },
