@@ -439,12 +439,12 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 
     $scope.$on('dartstate.settings_updated', function() {
 	$scope.settings = DartState.settings;
-	//$scope.$apply();
+	$scope.$apply();
     });
     
     $scope.$on('dartstate.state_updated', function() {
 	$scope.state = DartState.state;
-	//$scope.$apply();
+	$scope.$apply();
 	fitText();
     });
 
