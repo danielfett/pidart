@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -48,7 +47,7 @@
           </ul>
 	  <form class="form-horizontal">
 	    <div class="form-group form-group-sm" style="float: right; padding-top: 10px;">
-	      <select style="width: 15em;" class="form-control" ng-model="backend" ng-change="backendChanged()" ng-options="b.backend as b.name for b in availableBackends">
+	      <select id="backendselector" class="form-control" ng-model="selectedBackend" ng-change="backendChanged()" ng-options="b.id as b.name for b in availableBackends">
 	      </select>
 	    </div>
 	  </form>

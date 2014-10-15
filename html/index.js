@@ -2,7 +2,7 @@
 var usualSuspects = ['DF', 'ES', 'GS', 'DR', 'RK', 'TT'];
 
 
-function dartenbankBackend(url) {
+function dartenbankBackend(url, $http) {
     if (url == undefined) {
 	url = 'http://infsec.uni-trier.de/dartenbank';
     }
@@ -14,36 +14,60 @@ function dartenbankBackend(url) {
 	    {'url': url + '/input/', 'name': 'Input Results'}
 	],
 
-	getChartRowFromRatings: function(playersInChart, date, ratings) {
-	    var currentRow = [{v: date}];
-	    $.each(playersInChart, function(i, player) {
+	chartdata: undefined,
+
+	getChartRowFromRatings: function(playersInChart, tdate, ratings) {
+	    var currentRow = [{v: tdate}];
+	    for (var i = 0; i < playersInChart.length; i++) {
+		var player = playersInChart[i];
 		if (player in ratings) {
 		    currentRow.push({v: Math.round(ratings[player])});
 		} else {
 		    currentRow.push({});
 		}
-	    });
+	    };
 	    return {c: currentRow};
+	},
+
+
+
+	updateChartRankingInternal: function(currentPlayers, ranking, replace) {
+	    if (replace) {
+		this.chartdata.rows.pop();
+	    }
+	    var todaysRanking = eloEngine.calc(latestScores, ranking);
+	    this.chartdata.rows.push(
+		this.getChartRowFromRatings(
+		    currentPlayers,
+		    'today',
+		    todaysRanking
+		)
+	    );
+	},
+
+	updateChartRanking: function(currentPlayers, ranking, cb) {
+	    this.updateChartRankingInternal(currentPlayers, ranking, true);
+	    if(cb != undefined) {
+		cb(this.chartdata);
+	    }
 	},
 	
 	getChartData: function(currentPlayers, cbSuccess, cbFail) {
-	    $.ajax(url + '/rpc/elo.php?count=30', {
-		dataType: 'JSON'
-	    })
-		.done(function(data) {
+	    var _ = this;
+	    console.log("Get chart data");
+	    $http.get(url + '/rpc/elo.php?count=30')
+		.success(function(data) {
 		    var chartdata = {};
-		    var latestScores;
 		    var playersInChart = $.merge([], usualSuspects);
-		    console.debug("-B");
 		    $.each(currentPlayers, function (i, name) {
 			if (playersInChart.indexOf(name) === -1) {
 			    playersInChart.push(name);
 			}
 		    });
 		    console.log("Updating chart.");
-		    chartdata.cols = [];
-		    rows = [];
-		    cols.push({
+		    chartdata.cols = Array();
+		    chartdata.rows = Array();
+		    chartdata.cols.push({
 			id: 'date',
 			label: 'Date',
 			type: 'string'
@@ -58,7 +82,7 @@ function dartenbankBackend(url) {
 		    
 		    $.each(data, function(date, scores) {
 			chartdata.rows.push(
-			    getChartRowFromRatings(
+			    _.getChartRowFromRatings(
 				playersInChart,
 				date.split(' ')[0],
 				scores
@@ -66,22 +90,21 @@ function dartenbankBackend(url) {
 			);
 			latestScores = scores;
 		    });
+		    _.chartdata = chartdata;
+		    _.latestScores = latestScores;
 		    cbSuccess(chartdata, latestScores);
+		    _.updateChartRanking(currentPlayers, false);
 		})
-		.fail(function(xhr, status, error) {
+		.error(function(xhr, status, error) {
 		    cbFail(error);
 		});
 	},
 	
 	getAvailablePlayers: function(lastPlayers, cbSuccess, cbFail) {
-	    $.ajax(dartenbankAddress + '/rpc/get-players.php', {
-		dataType: 'JSON'
-	    })
-		.done(function(data) {
-		    $.ajax(dartenbankAddress + '/rpc/elo.php?count=1', {
-			dataType: 'JSON'
-		    })
-			.done(function(rankdata) {
+	    $http.get(url + '/rpc/get-players.php')
+		.success(function(data) {
+		    $http.get(url + '/rpc/elo.php?count=1')
+			.success(function(rankdata) {
 			    
 			    var availablePlayers = [];
 			    var ranking = rankdata[Object.keys(rankdata)[0]];
@@ -111,15 +134,18 @@ function dartenbankBackend(url) {
 				    selected:true
 				});
 			    });
-			    availablePlayers.sort(function(a,b){return a.rank-b.rank});
+			    availablePlayers.sort(
+				function(a,b){
+				    return (b.name < a.name) ? 1 : (a.name == b.name)? 0 : -1
+				});
 			    
 			    cbSuccess(availablePlayers);
 			})
-			.fail(function(xhr, status, error) {
+			.error(function(xhr, status, error) {
 			    cbFail(error);
 			});
 		})
-		.fail(function(xhr, status, error) {
+		.error(function(xhr, status, error) {
 		    cbFail(error);
 		});
 	},
@@ -135,8 +161,7 @@ function dummyBackend() {
     return {
 	hasChart: false,
 	links: [
-	    {'url': 'http://infsec.uni-trier.de/dartenbank', 'name': 'Dartenbank'},
-	    {'url': 'http://infsec.uni-trier.de/dartenbank/input/', 'name': 'Input Results'}
+	    {'url': 'http://example.com', 'name': 'Dummy Backend'}
 	],
 	
 	getChartData: function(currentPlayers, cbSuccess, cbFail) {
@@ -154,10 +179,7 @@ function dummyBackend() {
 function offlineDartenbankBackend() {
     return {
 	hasChart: false,
-	links: [
-	    {'url': 'http://infsec.uni-trier.de/dartenbank', 'name': 'Dartenbank'},
-	    {'url': 'http://infsec.uni-trier.de/dartenbank/input/', 'name': 'Input Results'}
-	],
+	links: [],
 	
 	getChartData: function(currentPlayers, cbSuccess, cbFail) {
 	    cbSuccess(Array(), Array());
@@ -297,6 +319,7 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
     var _ = {};
     _.backendWsUri = window.location.href.replace(/^http(s?:\/\/[^/]*)\/.*$/, 'ws$1/websocket');
     _.sock = new ReconnectingWebSocket(_.backendWsUri);
+    var initialBroadcastSent = false;
     var state = {};
     var settings = {
 	sound: 'espeak',
@@ -323,27 +346,31 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 	    state = $.extend(state, message.state);
 	    $rootScope.$broadcast('dartstate.state_updated');
 	    if (typeof(message.state.ranking) !== 'undefined') {
-		$rootScope.$broadcast('dartstate.ranking_updated')
+		$rootScope.$broadcast('dartstate.ranking_updated');
 	    }
 
 	    if (state.state == 'null') {
 		$rootScope.$broadcast('dartstate.no_game');
 	    }
 
+	    if (!initialBroadcastSent) {
+		$rootScope.$broadcast('dartstate.new_game_started');
+	    }
+
 	} else if (message.type == 'info') {
 	    if (message.info == 'game_initialized') {
 		$rootScope.$broadcast('dartstate.new_game_started');
+		initialBroadcastSent = true;
 	    }
 	} else if (message.type == 'settings') {
 	    settings = $.extend(settings, message.settings);
 	    $rootScope.$broadcast('dartstate.settings_updated');
 	} else if (message.type == 'version') {
-	    if (_.serverID === null) {
+	    if (_.serverID == undefined) {
 		_.serverID = message.version;
-		//$scope.updateChartFull();
 	    } else {
 		if (_.serverID != message.version) {
-		    //window.location.reload();
+		    window.location.reload();
 		}
 	    }
 	}
@@ -355,7 +382,7 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 	};
 })
 
-.controller('DartCtrl', ['$scope', '$timeout', '$filter', 'DartState',  function ($scope, $timeout, $filter, DartState) {
+.controller('DartCtrl', ['$scope', '$timeout', '$filter', '$http', 'DartState',  function ($scope, $timeout, $filter, $http, DartState) {
     $scope.state = {};
     $scope.availablePlayers = Array();
     $scope.latestScores = {};
@@ -371,24 +398,12 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
     $scope.sortablePlayers = Array();
 
     $scope.availableBackends = [
-	{'name': 'Official InfSec Dartenbank', backend: dartenbankBackend('http://infsec.uni-trier.de/dartenbank')},
-	{'name': 'No Backend', backend: dummyBackend()},
-	{'name': 'Offline Test Backend', backend: offlineDartenbankBackend()}
+	{'id': 'dartenbank', 'name': 'Official InfSec Dartenbank', backend: dartenbankBackend('http://infsec.uni-trier.de/dartenbank', $http)},
+	{'id': 'nobackend', 'name': 'No Backend', backend: dummyBackend()},
+	{'id': 'offline', 'name': 'Offline Test Backend', backend: offlineDartenbankBackend()}
     ];
-    if (localStorage['selectedBackend'] != undefined &&
-       $scope.availableBackends[localStorage['selectedBackend']] != undefined) {
-	$scope.backend = $scope.availableBackends[localStorage['selectedBackend']].backend;
-    } else {
-	$scope.backend = $scope.availableBackends[0].backend;
-    }
+    $scope.selectedBackend = null;
 
-    $scope.backendChanged = function () {
-	for (var i; i < $scope.availableBackends.length; i++) {
-	    if ($scope.backend == $scope.availableBackends[i].backend) {
-		localStorage['selectedBackend'] = i;
-	    }
-	}
-    }
     
     var history = {};
     history.type="LineChart";
@@ -409,25 +424,27 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
     $scope.chart = history;
 
     $scope.$on('dartstate.new_game_started', function() {
+	console.log("new game started");
 	$('a[href="#order"]').trigger('click');
     });
     
     $scope.$on('dartstate.ranking_updated', function() {
-	$scope.updateChartRanking(true);
+	$scope.updateChartRanking($scope.state.players, $scope.state.ranking, true);
     });
 
     $scope.$on('dartstate.no_game', function() {
+	console.log("no game running");
 	$('a[href="#newgame"]').trigger('click');
     });
 
     $scope.$on('dartstate.settings_updated', function() {
 	$scope.settings = DartState.settings;
-	$scope.$apply();
+	//$scope.$apply();
     });
     
     $scope.$on('dartstate.state_updated', function() {
 	$scope.state = DartState.state;
-	$scope.$apply();
+	//$scope.$apply();
 	fitText();
     });
 
@@ -499,14 +516,14 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 	$scope.chartUpdating = true;
 	$scope.backend.getChartData($scope.state.players, function (chartData, latestScores) {
 	    $scope.chartUpdating = false;
-	    if ($scope.oldChartData === data) {
-		$scope.$apply();
+	    if ($scope.oldChartData === chartData) {
+		//$scope.$apply();
+		console.log("Chart data not changed.");
 		return;
 	    }
-	    $scope.oldChartData = data;
+	    $scope.oldChartData = chartData;
 	    $scope.chart.data = chartData;
 	    $scope.latestScores = latestScores;
-	    $scope.updateChartRanking(false);
 	}, function(error) {
 	    $scope.chartUpdating = false;
 	    console.error("Error updating chart from Dartenbank: " + error);
@@ -514,22 +531,14 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 	});
     };
 
-    $scope.updateChartRanking = function(replace) {
-	if (!$scope.backend.hasChart || ! $scope.chart.data.rows) {
+    $scope.updateChartRanking = function() {
+	if ($scope.backend == undefined || !$scope.backend.hasChart || ! $scope.chart.data.rows) {
 	     return;
 	}
-	if (replace) {
-	    $scope.chart.data.rows.pop();
-	}
-	var todaysRanking = eloEngine.calc($scope.latestScores, $scope.state.ranking);
-	$scope.chart.data.rows.push(
-	    $scope.getChartRowFromRatings(
-		'today',
-		todaysRanking
-	    )
-	);
-	$scope.$apply();
-    };
+	$scope.backend.updateChartRanking($scope.state.players, $scope.state.ranking, function (newChartData) {
+	    $scope.chart.data = newChartData;
+	});
+    }
 
 
     $scope.submitResult = function() {
@@ -544,6 +553,9 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
     }
 
     $scope.updateAvailablePlayers = function() {
+	if ($scope.backend == undefined) {
+	    return;
+	}
 	$scope.chartUpdating = true;
 	
 	var lastPlayers = [];
@@ -553,11 +565,10 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 	$scope.backend.getAvailablePlayers(lastPlayers, function(availablePlayers) {
 	    $scope.availablePlayers = availablePlayers;
 	    $scope.chartUpdating = false;
-	    $scope.$apply();
-	
+	    //$scope.$apply();	
 	}, function (){
 	    $scope.chartUpdating = false;
-	    $scope.$apply();
+	    //$scope.$apply();
 	});
 
     };
@@ -659,6 +670,7 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 
 	    if (e.target.hash == '#newgame') {
 		$scope.updateAvailablePlayers();
+		$scope.$apply();
 	    }
 	});
 	//window.setInterval($scope.updateChartFull, 1000 * 60 * 5);
@@ -680,11 +692,44 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 
     // Sorting players before starting the game!
 
-  $scope.sortableOptions = { 
-      stop: function() {
-	  console.log($scope.sortablePlayers);
-      }
-  };
+    $scope.sortableOptions = { 
+	stop: function() {
+	    console.log($scope.sortablePlayers);
+	}
+    };
+
+    // Selecting the right backend
+    
+
+    function selectBackend(selectedId) {
+	if ($scope.backend == undefined || $scope.backend.id != selectedId) {
+	    for (var i = 0; i < $scope.availableBackends.length; i++) {
+		if (selectedId == $scope.availableBackends[i].id) {
+		    // backend has changed
+		    $scope.backend = $scope.availableBackends[i].backend;
+		    $scope.selectedBackend = selectedId;
+		    $scope.updateAvailablePlayers();
+		    localStorage['selectedBackend'] = selectedId;
+		    return;
+		}
+	    }
+	} else {
+	    return;
+	}
+	console.log("Could not find id: " + selectedId);
+	console.log("Trying now: " + $scope.availableBackends[0].id);
+	selectBackend($scope.availableBackends[0].id);
+    };
+
+    if (localStorage['selectedBackend'] != undefined) {
+	selectBackend(localStorage['selectedBackend']);
+    } else {
+	selectBackend($scope.availableBackends[0].id);
+    }
+
+    $scope.backendChanged = function () {
+	selectBackend($scope.selectedBackend);
+    };
 
     // For debugging...
     $scope.onKeypress = function(ev) {

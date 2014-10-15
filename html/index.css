@@ -104,3 +104,9 @@ body {
     padding: 10px;
     z-index: 10000;
 }
+
+#backendselector {
+    width: 15em;
+    background-color: black;
+    color: #ddd;
+}
