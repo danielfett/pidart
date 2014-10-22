@@ -1,11 +1,17 @@
   
-var usualSuspects = ['DF', 'ES', 'GS', 'DR', 'RK', 'TT'];
-
-
 function dartenbankBackend(url, $http) {
     if (url == undefined) {
 	url = 'http://infsec.uni-trier.de/dartenbank';
     }
+
+    var usualSuspects = Array();
+
+    /* We do this synchronously, as it makes things easier. */
+    var req = new XMLHttpRequest();
+    req.open('GET', url + '/rpc/get-usual-suspects.php', false); 
+    req.send(null);
+    if(req.status == 200)
+	usualSuspects = JSON.parse(req.responseText);
 
     return {
 	hasChart: true,
@@ -404,6 +410,7 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 
     $scope.availableBackends = [
 	{'id': 'dartenbank', 'name': 'Official InfSec Dartenbank', backend: dartenbankBackend('http://infsec.uni-trier.de/dartenbank', $http)},
+	{'id': 'dartenbug', 'name': 'Inofficial Dartenbank', backend: dartenbankBackend('http://x.uni-trier.de/dartenbank', $http)},
 	{'id': 'nobackend', 'name': 'No Backend', backend: dummyBackend()},
 	{'id': 'offline', 'name': 'Offline Test Backend', backend: offlineDartenbankBackend()}
     ];
