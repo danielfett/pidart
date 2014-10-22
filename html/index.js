@@ -15,11 +15,13 @@ function dartenbankBackend(url, $http) {
 	],
 
 	chartdata: undefined,
+	currentRanking: undefined,
+	currentPlayersInChart: undefined,
 
-	getChartRowFromRatings: function(playersInChart, tdate, ratings) {
+	getChartRowFromRatings: function(tdate, ratings) {
 	    var currentRow = [{v: tdate}];
-	    for (var i = 0; i < playersInChart.length; i++) {
-		var player = playersInChart[i];
+	    for (var i = 0; i < this.currentPlayersInChart.length; i++) {
+		var player = this.currentPlayersInChart[i];
 		if (player in ratings) {
 		    currentRow.push({v: Math.round(ratings[player])});
 		} else {
@@ -29,51 +31,52 @@ function dartenbankBackend(url, $http) {
 	    return {c: currentRow};
 	},
 
+	updateChartRanking: function(ranking, cb) {
+	    this.currentRanking = ranking;
+	    this.calculateLatestChartRanking(cb);
+	},
 
-
-	updateChartRankingInternal: function(currentPlayers, ranking, replace) {
-	    if (replace) {
-		this.chartdata.rows.pop();
+	calculateLatestChartRanking: function(cb) {
+	    if (this.currentRanking == undefined || this.currentPlayers == undefined) {
+		return;
 	    }
-	    var todaysRanking = eloEngine.calc(latestScores, ranking);
+	    this.chartdata.rows.pop();
+	    var todaysRanking = eloEngine.calc(this.latestScores, this.currentRanking);
 	    this.chartdata.rows.push(
 		this.getChartRowFromRatings(
-		    currentPlayers,
 		    'today',
 		    todaysRanking
 		)
 	    );
-	},
-
-	updateChartRanking: function(currentPlayers, ranking, cb) {
-	    this.updateChartRankingInternal(currentPlayers, ranking, true);
 	    if(cb != undefined) {
 		cb(this.chartdata);
 	    }
 	},
+
 	
 	getChartData: function(currentPlayers, cbSuccess, cbFail) {
 	    var _ = this;
-	    console.log("Get chart data");
+	    _.currentPlayers = currentPlayers;
+	    
+	    var playersInChart = $.merge([], usualSuspects);
+	    $.each(currentPlayers, function (i, name) {
+		if (playersInChart.indexOf(name) === -1) {
+		    playersInChart.push(name);
+		}
+	    });
+	    _.currentPlayersInChart = playersInChart;
+
 	    $http.get(url + '/rpc/elo.php?count=30')
 		.success(function(data) {
-		    console.log(data);
 		    var chartdata = {
 			'rows': Array(),
-			'cols': Array()
+			'cols': [{
+			    id: 'date',
+			    label: 'Date',
+			    type: 'string'
+			}]
 		    };
-		    var playersInChart = $.merge([], usualSuspects);
-		    $.each(currentPlayers, function (i, name) {
-			if (playersInChart.indexOf(name) === -1) {
-			    playersInChart.push(name);
-			}
-		    });
-		    console.log("Updating chart.");
-		    chartdata.cols.push({
-			id: 'date',
-			label: 'Date',
-			type: 'string'
-		    });
+
 		    $.each(playersInChart, function (i, name) {
 			chartdata.cols.push({
 			    id: name,
@@ -85,20 +88,16 @@ function dartenbankBackend(url, $http) {
 		    $.each(data, function(date, scores) {
 			chartdata.rows.push(
 			    _.getChartRowFromRatings(
-				playersInChart,
 				date.split(' ')[0],
 				scores
 			    )
 			);
-			latestScores = scores;
-			console.log("Adding " + date);
+			_.latestScores = scores;
 		    });
-		    console.log("Resulting chartdata:");
-		    console.log(chartdata);
+		    chartdata.rows.push({}); // add empty element that will later be replaced by today's scores
 		    _.chartdata = chartdata;
-		    _.latestScores = latestScores;
-		    cbSuccess(chartdata, latestScores);
-		    _.updateChartRankingInternal(currentPlayers, chartdata, false);
+		    _.calculateLatestChartRanking();
+		    cbSuccess(_.chartdata);
 		})
 		.error(function(xhr, status, error) {
 		    cbFail(error);
@@ -157,7 +156,11 @@ function dartenbankBackend(url, $http) {
 	submitResult: function(ranking) {
 	    urlparam = encodeURIComponent(JSON.stringify(ranking));
 	    window.open(url + '/input/remote-input.php?standings=' + urlparam);
-	}
+	},
+	sortPlayers: function(players) {
+	    players.sort(function(a,b){return a.rank-b.rank});
+	    return players;
+	}	    
     }
 }
 
@@ -252,11 +255,9 @@ var eloEngine = new function(){
 		} else {
 		    against[opponent] = LOSS;
 		}
-		console.debug("ELO: " + info['name'] + " vs. " + info2['name'] + ": " + against[opponent]);
 	    });
 	    game[player] = against;
 	});
-	console.debug(game);
 	return game;
     }
 
@@ -274,7 +275,6 @@ var eloEngine = new function(){
 		exp_sum += elo_exp(ra, rb);
 	    });
 	    var new_ra = ra + EloK * (sum - exp_sum);
-	    console.debug("ELO for player " + playerA + " was " + new_ratings[playerA] + " -> " + new_ra);
 	    new_ratings[playerA] = new_ra;
 	});
 	return new_ratings;
@@ -345,7 +345,6 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
     }
 
     _.sock.onmessage = function(e) {
-	console.log("Got message: " + e.data);
 	var message = JSON.parse(e.data);
 	if (message.type == 'state') {
 	    state = $.extend(state, message.state);
@@ -391,7 +390,6 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 .controller('DartCtrl', ['$scope', '$timeout', '$filter', '$http', 'DartState',  function ($scope, $timeout, $filter, $http, DartState) {
     $scope.state = {};
     $scope.availablePlayers = Array();
-    $scope.latestScores = {};
     $scope.playersInChart = Array();
     $scope.initialValue = 301;
     $scope.predicate = 'started';
@@ -436,7 +434,7 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
     });
     
     $scope.$on('dartstate.ranking_updated', function() {
-	$scope.updateChartRanking($scope.state.players, $scope.state.ranking, true);
+	$scope.updateChartRanking();
     });
 
     $scope.$on('dartstate.no_game', function() {
@@ -477,7 +475,9 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 	    alert("Please select at least two players.");
 	    return;
 	}
-	$scope.sortablePlayers.sort(function(a,b){return a.rank-b.rank});
+	if ($scope.backend.sortPlayers != undefined) {
+	    $scope.sortablePlayers = $scope.backend.sortPlayers($scope.sortablePlayers);
+	}
 	$scope.sortPlayerDialogMode = updatePlayers ? 'update' : 'new';
 	$('#sortPlayerDialog').modal('show');
     };
@@ -507,22 +507,18 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
     };
 
     // ********************************************************************************
-
+    // Updating the Chart
+    // ********************************************************************************
+    
     $scope.updateChartFull = function() {
 	if (!$scope.backend.hasChart || ! $scope.state.players) {
 	    return;
 	}
 	$scope.chartUpdating = true;
-	$scope.backend.getChartData($scope.state.players, function (chartData, latestScores) {
+	$scope.backend.updateChartRanking($scope.state.ranking);
+	$scope.backend.getChartData($scope.state.players, function (chartData) {
 	    $scope.chartUpdating = false;
-	    if ($scope.oldChartData === chartData) {
-		//$scope.$apply();
-		console.log("Chart data not changed.");
-		return;
-	    }
-	    $scope.oldChartData = chartData;
 	    $scope.chart.data = chartData;
-	    $scope.latestScores = latestScores;
 	}, function(error) {
 	    $scope.chartUpdating = false;
 	    console.error("Error updating chart from Dartenbank: " + error);
@@ -534,11 +530,16 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 	if ($scope.backend == undefined || !$scope.backend.hasChart || ! $scope.chart.data.rows) {
 	     return;
 	}
-	$scope.backend.updateChartRanking($scope.state.players, $scope.state.ranking, function (newChartData) {
-	    $scope.chart.data = newChartData;
-	});
+	$scope.backend.updateChartRanking(
+	    $scope.state.ranking,
+	    function (newChartData) {
+		$scope.chart.data = newChartData;
+	    }
+	);
     }
 
+    // ********************************************************************************
+    
 
     $scope.submitResult = function() {
 	if (!$scope.backend.submitResult) {
@@ -672,9 +673,8 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 		$scope.$apply();
 	    }
 	});
-	//window.setInterval($scope.updateChartFull, 1000 * 60 * 5);
-	/*console.log("Retrieving general information...");
-	$.ajax('config')
+
+	/*$.ajax('config')
 	.done(function(data){
  
 			   if ($scope.currentBackend) {
@@ -689,13 +689,6 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 
     });
 
-    // Sorting players before starting the game!
-
-    $scope.sortableOptions = { 
-	stop: function() {
-	    console.log($scope.sortablePlayers);
-	}
-    };
 
     // Selecting the right backend
     
