@@ -168,8 +168,8 @@
 	      <input class="form-control" type="number" value="301" min="1" max="1001" id="initialValue" ng-model="initialValue">
 	    </div>
 	    <div class="col-md-8" style="valign: bottom; text-align:right;">
-	      <input class="btn btn-primary" type="submit" value="start new game" ng-click="newGame()">
-	      <input class="btn btn-default" type="submit" value="change current players" ng-click="updatePlayers()" ng-hide="state.state != 'playing' && state.state != 'hold'">
+	      <input class="btn btn-primary" type="submit" value="start new game" ng-click="newGame(false)">
+	      <input class="btn btn-default" type="submit" value="change current players" ng-click="newGame(true)" ng-hide="state.state != 'playing' && state.state != 'hold'">
 	      <input class="btn btn-default" type="submit" value="cancel game" ng-click="cancelGame()" ng-hide="state.state != 'playing' && state.state != 'hold'">
 	      <div ng-hide="!debugging">
 		<input type="checkbox" ng-model="startTestGame"> Start test game
@@ -235,7 +235,7 @@
 	    <ul ui-sortable="sortableOptions" ng-model="sortablePlayers">
 	      <div class="btn btn-info" ng-repeat="p in sortablePlayers">{{$index+1}}. {{p.name}}</div>
 	    </ul>
-	    <p class="bg-danger" ng-if="state.state != 'gameover' && state.state != 'null'">
+	    <p class="bg-danger" ng-if="state.state != 'gameover' && state.state != 'null' && sortPlayerDialogMode == 'new'">
 	      A game is currently running!
 	    </p>
 	    <p class="bg-warning" ng-if="isTestGame">
@@ -244,7 +244,8 @@
 	  </div>
 	  <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" ng-click="actualNewGame()">Start Game!</button>
+            <button ng-if="sortPlayerDialogMode == 'new'" type="button" class="btn btn-primary" ng-click="actualNewGame()">Start Game!</button>
+	    <button ng-if="sortPlayerDialogMode == 'update'" type="button" class="btn btn-primary" ng-click="actualNewGame()">Update Players</button>
 	  </div>
 	</div>
       </div>

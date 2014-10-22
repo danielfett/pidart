@@ -57,7 +57,11 @@ function dartenbankBackend(url, $http) {
 	    console.log("Get chart data");
 	    $http.get(url + '/rpc/elo.php?count=30')
 		.success(function(data) {
-		    var chartdata = {};
+		    console.log(data);
+		    var chartdata = {
+			'rows': Array(),
+			'cols': Array()
+		    };
 		    var playersInChart = $.merge([], usualSuspects);
 		    $.each(currentPlayers, function (i, name) {
 			if (playersInChart.indexOf(name) === -1) {
@@ -65,8 +69,6 @@ function dartenbankBackend(url, $http) {
 			}
 		    });
 		    console.log("Updating chart.");
-		    chartdata.cols = Array();
-		    chartdata.rows = Array();
 		    chartdata.cols.push({
 			id: 'date',
 			label: 'Date',
@@ -89,11 +91,14 @@ function dartenbankBackend(url, $http) {
 			    )
 			);
 			latestScores = scores;
+			console.log("Adding " + date);
 		    });
+		    console.log("Resulting chartdata:");
+		    console.log(chartdata);
 		    _.chartdata = chartdata;
 		    _.latestScores = latestScores;
 		    cbSuccess(chartdata, latestScores);
-		    _.updateChartRanking(currentPlayers, false);
+		    _.updateChartRankingInternal(currentPlayers, chartdata, false);
 		})
 		.error(function(xhr, status, error) {
 		    cbFail(error);
@@ -355,6 +360,7 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 
 	    if (!initialBroadcastSent) {
 		$rootScope.$broadcast('dartstate.new_game_started');
+		initialBroadcastSent = true;
 	    }
 
 	} else if (message.type == 'info') {
@@ -396,6 +402,7 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
     $scope.serverID = null;
     $scope.isOfficialGame = true;
     $scope.sortablePlayers = Array();
+    $scope.sortPlayerDialogMode = 'new'; // 'new' means a new game should be started afterwards; 'update' means that the current list of players is to be updated instead
 
     $scope.availableBackends = [
 	{'id': 'dartenbank', 'name': 'Official InfSec Dartenbank', backend: dartenbankBackend('http://infsec.uni-trier.de/dartenbank', $http)},
@@ -455,7 +462,11 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 	});
     }
 
-    $scope.newGame = function() {
+    // ********************************************************************************
+    // Starting a new Game
+    // ********************************************************************************
+    
+    $scope.newGame = function(updatePlayers) {
 	$scope.sortablePlayers = [];
 	for (p in $scope.availablePlayers) {
 	    if ($scope.availablePlayers[p].selected) {
@@ -466,6 +477,8 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 	    alert("Please select at least two players.");
 	    return;
 	}
+	$scope.sortablePlayers.sort(function(a,b){return a.rank-b.rank});
+	$scope.sortPlayerDialogMode = updatePlayers ? 'update' : 'new';
 	$('#sortPlayerDialog').modal('show');
     };
 
@@ -474,40 +487,26 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 	for (var i = 0; i < $scope.sortablePlayers.length; i ++) {
 	    players.push($scope.sortablePlayers[i].name);
 	}
-
-	postxhr({
-	    command: 'new-game',
-	    players: players,
-	    startvalue: $scope.initialValue,
-	    testgame: $scope.startTestGame ? true : false
-	});
-	if ($scope.startTestGame) {
-	    sessionStorage['lastPlayers'] = JSON.stringify(players);
+	if ($scope.sortPlayerDialogMode == 'new') {
+	    postxhr({
+		command: 'new-game',
+		players: players,
+		startvalue: $scope.initialValue,
+		testgame: $scope.startTestGame ? true : false
+	    });
+	    if ($scope.startTestGame) {
+		sessionStorage['lastPlayers'] = JSON.stringify(players);
+	    }
+	} else {
+	    postxhr({
+		command: 'update-players',
+		players: players
+	    });
 	}
 	$('#sortPlayerDialog').modal('hide');
     };
 
-    $scope.updatePlayers = function() {
-        var selectedPlayers = [];
-	for (p in $scope.availablePlayers) {
-	    if ($scope.availablePlayers[p].selected) {
-		selectedPlayers.push($scope.availablePlayers[p]);
-	    }
-	}
-	selectedPlayers.sort(function(a,b){return a.rank-b.rank});
-	if (selectedPlayers.length < 2) {
-	    alert("Please select at least two players.");
-	    return;
-	}
-	var players = [];
-	for (var i = 0; i < selectedPlayers.length; i ++) {
-	    players.push(selectedPlayers[i].name);
-	}
-	postxhr({
-	    command: 'update-players',
-	    players: players
-	});
-    }
+    // ********************************************************************************
 
     $scope.updateChartFull = function() {
 	if (!$scope.backend.hasChart || ! $scope.state.players) {
