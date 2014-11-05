@@ -272,7 +272,7 @@ def hit(state):
             },
 
         {
-            'use': dart in ['T20', 'T19', 'T18', 'T17'],
+            'use': dart in ['T20', 'T19', 'T18', 'T17', 'T16'],
             'text': 'high_triple',
             'weight': 70
                 },
