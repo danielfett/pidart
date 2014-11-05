@@ -233,17 +233,17 @@ def hit(state):
         
         # add the all-famous washing machine(s).
         {
-            'use': len(darts_so_far) == 3 and in_ring(darts_so_far) and [mod(darts_so_far[x]) for x in range(3)] == ['S' * 3],
+            'use': len(darts_so_far) == 3 and in_ring(darts_so_far) and [mod(x) for x in darts_so_far] == ['S' * 3],
             'text': 'washing_machine',
             'weight': 150
             },
         {
-            'use': len(darts_so_far) == 3 and in_ring(darts_so_far) and [mod(darts_so_far[x]) for x in range(3)] == ['D' * 3],
+            'use': len(darts_so_far) == 3 and in_ring(darts_so_far) and [mod(x) for x in darts_so_far] == ['D' * 3],
             'text': 'double_washing_machine',
             'weight': 150
             },
         {
-            'use': len(darts_so_far) == 3 and in_ring(darts_so_far) and [mod(darts_so_far[x]) for x in range(3)] == ['T' * 3],
+            'use': len(darts_so_far) == 3 and in_ring(darts_so_far) and [mod(x) for x in darts_so_far] == ['T' * 3],
             'text': 'triple_washing_machine',
             'weight': 150
             },
