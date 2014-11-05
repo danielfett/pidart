@@ -345,7 +345,7 @@ angular.module('darts', ['googlechart', 'ui.sortable'])
 
     _.sock.onclose = function(e) {
 	console.log("Connection closed (wasClean = " + e.wasClean + ", code = " + e.code + ", reason = '" + e.reason + "')");
-	_.state.state = 'connlost';
+	state.state = 'connlost';
 	$rootScope.$broadcast('dartstate.state_updated');
 	$rootScope.$broadcast('dartstate.connection_lost');
     }
