@@ -41,6 +41,8 @@
             <li ng-repeat="l in backend.links">
 	      <a href="{{l.url}}">{{l.name}}</a>
 	    </li>
+	  </ul>
+	  <ul class="nav navbar-nav">
 	    <li ng-if="state.state == 'gameover' && backend.submitResult">
 	      <a href="" ng-click="submitResult()"><b>Submit Results</b></a>
 	    </li>
