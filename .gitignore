@@ -5,3 +5,11 @@ darts.db
 sounds/cached-mary/*.wav
 *~
 */#*#
+
+/gamemanager/build/
+/gamemanager/darts
+/gamemanager/darts-original.db
+/gamemanager/dartsstats.c
+/gamemanager/dartsstats.html
+/gamemanager/dartsstats.so
+/gamemanager/test.db
