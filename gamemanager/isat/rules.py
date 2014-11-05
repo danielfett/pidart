@@ -79,7 +79,6 @@ texts = {
 
     # texts for hit_winner
     #'checked_out_winner': ("Checked out! You are today's winner!", 'excited'),
-    'checked_out_winner': 'wav:wwm/spielende',
     'checked_out_winner_2': 'wav:others/hallelujah-trail',
     #'checked_out': ('Checked out!', 'happy'),
     
@@ -255,7 +254,7 @@ def hit(state):
         {
             'use': len(darts_so_far) == 2 and in_ring(darts_so_far),
             'text': 'going_for_washing_machine',
-            'weight': 40
+            'weight': 30
             },
 
         # Just a lot of points...
@@ -317,11 +316,6 @@ def hit_winner(state):
         score_before, score_after = convenience(state)
     num_before = len(state.winners()) # players that checked out before
     rules = [
-#        {
-#            'use': num_before == 0,
-#            'text': 'checked_out_winner',
-#            'weight': 50
-#            },
         
         {
             'use': num_before == 0,
