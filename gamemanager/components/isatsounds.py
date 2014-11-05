@@ -9,7 +9,7 @@ from random import randint, choice
 from os.path import exists
 
 from isat.tools import isat_filename
-from isat.rules import texts, hit, hit_bust, hit_winner
+from isat.rules import texts, hit, hit_bust, hit_winner, remove_darts
 
 from darttools import singledart_checkoutable
 from darttools import checkoutable
@@ -166,9 +166,9 @@ class ISATSounds(Component):
     def GameOver(self, state):
         self._stop_music()
 
-    def EnterHold(self, *args):
+    def EnterHold(self, state, _):
         sleep(0.5)
-        self._say('press_start')
+        self._say_from_rule(remove_darts(state), 'beep')
 
     def FrameStarted(self, state): 
         self._say('next_player')

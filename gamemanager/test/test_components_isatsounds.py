@@ -11,7 +11,7 @@ class TestSounds(unittest.TestCase):
         self.snd = ISATSounds(test=True)
 
     def test_events_0(self):
-        methods = ['DartStuck', 'ManualNextPlayer', 'EnterHold']
+        methods = ['DartStuck', 'ManualNextPlayer']
         for m in methods:
             getattr(self.snd, m)()
 
@@ -21,6 +21,6 @@ class TestSounds(unittest.TestCase):
             getattr(self.snd, m)(self.mock_1)        
 
     def test_events_2(self):
-        methods = ['Hit', 'HitBust', 'HitWinner']
+        methods = ['Hit', 'HitBust', 'HitWinner', 'EnterHold']
         for m in methods:
             getattr(self.snd, m)(self.mock_1, 'T20')    

@@ -342,7 +342,7 @@ class DartGame(Component):
             self.gameover()
         elif hold:
             self.state.state = 'hold'
-            self.fire(EnterHold(self.state, False))
+            self.fire(EnterHold(deepcopy(self.state), False))
         else:
             self.start_frame()
 

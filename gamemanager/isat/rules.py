@@ -366,3 +366,14 @@ def hit_bust(state):
 
         ]
     return rules
+
+def remove_darts(state):
+    rules = [
+        {
+            'use': True,
+            'text': 'press_start',
+            'weight': 40
+            },
+
+        ]
+    return rules
